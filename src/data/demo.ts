@@ -232,13 +232,13 @@ Christ the [C]Lord, the [F]newborn [C]King.
   },
   {
     id: sid(4),
-    title: '我向祢禱告',
+    title: '愛是不保留',
     author: null,
     song_key: null,
     score_url: null,
     sort_order: 4,
     session: '🎄 01 · Christmas Joy',
-    chordpro: `{title: 我向祢禱告}
+    chordpro: `{title: 愛是不保留}
 
 {comment: Lyrics and chords to be added by an admin (licensed song).}
 `,
@@ -352,13 +352,13 @@ And [D]with His [G]blood man[D]kind [A]hath [D]bought.
   },
   {
     id: sid(9),
-    title: '上帝早已預備',
+    title: '我向祢禱告',
     author: null,
     song_key: null,
     score_url: null,
     sort_order: 9,
     session: '💛 03 · Hope to Carry Home',
-    chordpro: `{title: 上帝早已預備}
+    chordpro: `{title: 我向祢禱告}
 
 {comment: Lyrics and chords to be added by an admin (licensed song).}
 `,
@@ -378,24 +378,11 @@ And [D]with His [G]blood man[D]kind [A]hath [D]bought.
   },
   {
     id: sid(11),
-    title: 'Build My Life',
-    author: null,
-    song_key: null,
-    score_url: null,
-    sort_order: 11,
-    session: '💛 03 · Hope to Carry Home',
-    chordpro: `{title: Build My Life}
-
-{comment: Lyrics and chords to be added by an admin (licensed song).}
-`,
-  },
-  {
-    id: sid(12),
     title: 'Joy to the World',
     author: 'Isaac Watts / arr. Lowell Mason',
     song_key: 'D',
     score_url: null,
-    sort_order: 12,
+    sort_order: 11,
     session: '💛 03 · Hope to Carry Home',
     chordpro: `{title: Joy to the World}
 {subtitle: Isaac Watts / arr. Lowell Mason}
