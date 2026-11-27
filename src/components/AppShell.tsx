@@ -8,11 +8,11 @@ import { useWakeLock } from '@/lib/useWakeLock';
 import { NowSinging } from '@/components/NowSinging';
 
 const TABS = [
+  { href: '/leaflet', label: 'Leaflet', icon: '✦' },
   // Not "/route": Next.js reserves a trailing `route` segment for route handlers.
   { href: '/ride', label: 'Route', icon: '🚋' },
   { href: '/songs', label: 'Songs', icon: '🎵' },
   { href: '/people', label: 'People', icon: '👥' },
-  { href: '/leaflet', label: 'Leaflet', icon: '✦' },
   { href: '/me', label: 'Me', icon: '🙂' },
 ];
 
