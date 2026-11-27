@@ -1,7 +1,8 @@
 # Tram Caroling 🚋🎄
 
-A mobile-first PWA for a Hong Kong Island tram caroling event: participants ride the tram from
-Kennedy Town to Shau Kei Wan (~2 hours) while singing carols and praying for each district they pass.
+A mobile-first PWA for a Hong Kong Island tram caroling event: participants ride a 2-hour tram loop from
+the Whitty Street Tram Depot to Causeway Bay, round Happy Valley and back to Whitty Street while singing
+carols and praying for each district they pass.
 
 ## Features
 
@@ -84,7 +85,9 @@ For the MVP, edit districts, prayer items and songs in the Supabase **Table Edit
 
 - **Prayer items:** add rows to `prayer_items` with the district's `id` and a `sort_order`.
 - **Districts:** `start_lat`/`start_lng` is where the district's stretch of the line begins; the app
-  snaps it to the route and a district runs until the next one starts.
+  snaps it to the route and a district runs until the next one starts. The route is a loop that
+  passes the same streets twice, so districts are placed in `sort_order`, each at or after the
+  previous one (a return-leg district can reuse an outbound street's coordinates).
 - **Songs:** paste ChordPro into `chordpro`. For a score, upload a PDF/image to the `scores` bucket
   and paste its public URL into `score_url`.
 - **Route geometry:** `src/data/route.ts` (approximate tram centre-line; refine if needed).
