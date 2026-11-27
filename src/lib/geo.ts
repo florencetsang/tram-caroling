@@ -39,9 +39,22 @@ export function buildRouteIndex(points: LatLng[]): RouteIndex {
   return { points, xy, cum, length: cum[cum.length - 1] ?? 0, lat0 };
 }
 
-export function snapToRoute(route: RouteIndex, p: LatLng): Snap {
+/** Snaps within this distance (m) of the closest one count as "also on the line here". */
+const SNAP_TOLERANCE_M = 40;
+/** Candidates closer together than this (m along the route) belong to the same pass. */
+const PASS_GAP_M = 150;
+/** How far (m) the tram may appear to slip backwards (GPS jitter) and stay on the same pass. */
+const BACKTRACK_M = 150;
+
+/**
+ * Snaps a point to the route. Where the route passes the same place more than once (e.g. the
+ * outbound and return legs of a loop), `hintAlong` — the last known position along the route —
+ * picks the pass at or just ahead of it. Without a hint, the earliest pass wins.
+ */
+export function snapToRoute(route: RouteIndex, p: LatLng, hintAlong?: number | null): Snap {
   const [px, py] = project(p, route.lat0);
-  let best: Snap = { along: 0, distance: Infinity, point: route.points[0] };
+  const candidates: Snap[] = [];
+  let bestDistance = Infinity;
   for (let i = 0; i < route.xy.length - 1; i++) {
     const [ax, ay] = route.xy[i];
     const [bx, by] = route.xy[i + 1];
@@ -52,15 +65,26 @@ export function snapToRoute(route: RouteIndex, p: LatLng): Snap {
     const sx = ax + t * dx;
     const sy = ay + t * dy;
     const d = Math.hypot(px - sx, py - sy);
-    if (d < best.distance) {
-      best = {
-        along: route.cum[i] + t * Math.sqrt(len2),
-        distance: d,
-        point: unproject([sx, sy], route.lat0),
-      };
-    }
+    bestDistance = Math.min(bestDistance, d);
+    candidates.push({ along: route.cum[i] + t * Math.sqrt(len2), distance: d, point: [sx, sy] });
   }
-  return best;
+  if (!candidates.length) return { along: 0, distance: Infinity, point: route.points[0] };
+
+  const near = candidates
+    .filter((c) => c.distance <= bestDistance + SNAP_TOLERANCE_M)
+    .sort((a, b) => a.along - b.along);
+  const passes: Snap[][] = [];
+  for (const c of near) {
+    const last = passes[passes.length - 1];
+    if (last && c.along - last[last.length - 1].along <= PASS_GAP_M) last.push(c);
+    else passes.push([c]);
+  }
+  const pass =
+    hintAlong == null
+      ? passes[0]
+      : (passes.find((ps) => ps[ps.length - 1].along >= hintAlong - BACKTRACK_M) ?? passes[passes.length - 1]);
+  const best = pass.reduce((a, b) => (b.distance < a.distance ? b : a));
+  return { ...best, point: unproject(best.point, route.lat0) };
 }
 
 export function pointAt(route: RouteIndex, along: number): LatLng {
@@ -93,13 +117,23 @@ export interface DistrictSpan {
   end: number;
 }
 
-/** Turns district start points into contiguous spans along the route. */
+/**
+ * Turns district start points into contiguous spans along the route. Districts are placed in
+ * `sort_order`, each one snapped at or after the previous one, so a district on the return leg of
+ * a loop lands on the return leg even when it shares streets with the outbound leg.
+ */
 export function buildDistrictSpans(
   route: RouteIndex,
-  districts: { id: string; start_lat: number; start_lng: number }[],
+  districts: { id: string; start_lat: number; start_lng: number; sort_order?: number }[],
 ): DistrictSpan[] {
-  const starts = districts
-    .map((d) => ({ id: d.id, start: snapToRoute(route, [d.start_lat, d.start_lng]).along }))
+  let hint: number | null = null;
+  const starts = [...districts]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((d) => {
+      const start = snapToRoute(route, [d.start_lat, d.start_lng], hint).along;
+      hint = start;
+      return { id: d.id, start };
+    })
     .sort((a, b) => a.start - b.start);
   return starts.map((s, i) => ({
     id: s.id,

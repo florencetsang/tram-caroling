@@ -70,7 +70,11 @@ export default function TramMap({
     const layer = routeLayer.current;
     if (!L || !layer) return;
     layer.clearLayers();
-    spans.forEach((span, i) => {
+    // Draw the current district last so it sits on top where the outbound and return legs overlap.
+    const order = spans
+      .map((span, i) => ({ span, i }))
+      .sort((a, b) => Number(a.span.id === currentDistrictId) - Number(b.span.id === currentDistrictId));
+    order.forEach(({ span, i }) => {
       const isCurrent = span.id === currentDistrictId;
       const district = districts.find((d) => d.id === span.id);
       const line = L.polyline(sliceRoute(route, span.start, span.end), {

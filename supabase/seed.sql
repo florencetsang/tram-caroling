@@ -5,45 +5,82 @@ insert into public.events (id, name, starts_at) values
   ('00000000-0000-0000-0000-000000000001', 'HOLY NIGHT, CITY LIGHTS • DEC 13', '2026-12-19 19:00:00+08')
 on conflict (id) do update set name = excluded.name, starts_at = excluded.starts_at;
 
+-- Route: Whitty Street Tram Depot -> Causeway Bay -> Happy Valley loop -> back to Whitty Street.
 insert into public.districts (id, event_id, name, name_zh, description, sort_order, start_lat, start_lng) values
-  ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001', 'Kennedy Town', '堅尼地城', 'Western terminus — where our journey begins.', 1, 22.28318, 114.12724),
-  ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001', 'Sai Ying Pun', '西營盤', 'Old streets, dried seafood shops and hillside neighbourhoods.', 2, 22.2864, 114.139),
-  ('00000000-0000-0000-0001-000000000003', '00000000-0000-0000-0000-000000000001', 'Sheung Wan', '上環', 'Western Market, ferry piers and traditional trades.', 3, 22.287, 114.147),
-  ('00000000-0000-0000-0001-000000000004', '00000000-0000-0000-0000-000000000001', 'Central', '中環', 'The financial heart of the city.', 4, 22.284, 114.1565),
-  ('00000000-0000-0000-0001-000000000005', '00000000-0000-0000-0000-000000000001', 'Admiralty', '金鐘', 'Government offices and the courts.', 5, 22.2795, 114.163),
-  ('00000000-0000-0000-0001-000000000006', '00000000-0000-0000-0000-000000000001', 'Wan Chai', '灣仔', 'Busy markets, nightlife and old tenement streets.', 6, 22.2774, 114.169),
-  ('00000000-0000-0000-0001-000000000007', '00000000-0000-0000-0000-000000000001', 'Causeway Bay', '銅鑼灣', 'Shopping crowds and Victoria Park.', 7, 22.279, 114.179),
-  ('00000000-0000-0000-0001-000000000008', '00000000-0000-0000-0000-000000000001', 'North Point', '北角', 'Tin Hau, Fortress Hill and the Chun Yeung Street market.', 8, 22.283, 114.191),
-  ('00000000-0000-0000-0001-000000000009', '00000000-0000-0000-0000-000000000001', 'Quarry Bay', '鰂魚涌', 'Taikoo Place offices and dense housing estates.', 9, 22.289, 114.209),
-  ('00000000-0000-0000-0001-000000000010', '00000000-0000-0000-0000-000000000001', 'Shau Kei Wan', '筲箕灣', 'Sai Wan Ho to the eastern terminus — an old fishing harbour.', 10, 22.283, 114.221)
+  ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001', 'Whitty Street & Sai Ying Pun', '屈地街・西營盤', 'Setting off from the Whitty Street Tram Depot through old streets and dried seafood shops.', 1, 22.2866, 114.1365),
+  ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001', 'Sheung Wan', '上環', 'Western Market, ferry piers and traditional trades.', 2, 22.2872, 114.147),
+  ('00000000-0000-0000-0001-000000000003', '00000000-0000-0000-0000-000000000001', 'Central', '中環', 'The financial heart of the city.', 3, 22.284, 114.1565),
+  ('00000000-0000-0000-0001-000000000004', '00000000-0000-0000-0000-000000000001', 'Admiralty', '金鐘', 'Government offices and the courts.', 4, 22.2795, 114.163),
+  ('00000000-0000-0000-0001-000000000005', '00000000-0000-0000-0000-000000000001', 'Wan Chai', '灣仔', 'Busy markets, nightlife and old tenement streets.', 5, 22.2772, 114.169),
+  ('00000000-0000-0000-0001-000000000006', '00000000-0000-0000-0000-000000000001', 'Causeway Bay', '銅鑼灣', 'Shopping crowds around Yee Wo Street and Times Square.', 6, 22.2794, 114.1804),
+  ('00000000-0000-0000-0001-000000000007', '00000000-0000-0000-0000-000000000001', 'Happy Valley', '跑馬地', 'Round the racecourse loop, past the hospitals and the old cemeteries.', 7, 22.2775, 114.1818),
+  ('00000000-0000-0000-0001-000000000008', '00000000-0000-0000-0000-000000000001', 'Wan Chai (return)', '灣仔（回程）', 'Heading back west along Hennessy Road.', 8, 22.2794, 114.1804),
+  ('00000000-0000-0000-0001-000000000009', '00000000-0000-0000-0000-000000000001', 'Admiralty & Central (return)', '金鐘・中環（回程）', 'Back through the city centre.', 9, 22.2774, 114.1671),
+  ('00000000-0000-0000-0001-000000000010', '00000000-0000-0000-0000-000000000001', 'Sheung Wan & Sai Ying Pun (return)', '上環・西營盤（回程）', 'The last stretch home to the Whitty Street Tram Depot.', 10, 22.2851, 114.1555)
 on conflict (id) do update set
   name = excluded.name, name_zh = excluded.name_zh, description = excluded.description,
   sort_order = excluded.sort_order, start_lat = excluded.start_lat, start_lng = excluded.start_lng;
 
+-- Remove prayer items dropped from the route.
+delete from public.prayer_items where district_id in (
+  select id from public.districts where event_id = '00000000-0000-0000-0000-000000000001'
+) and id not in (
+  '00000000-0000-0000-0002-000000000011',
+  '00000000-0000-0000-0002-000000000012',
+  '00000000-0000-0000-0002-000000000013',
+  '00000000-0000-0000-0002-000000000021',
+  '00000000-0000-0000-0002-000000000022',
+  '00000000-0000-0000-0002-000000000031',
+  '00000000-0000-0000-0002-000000000032',
+  '00000000-0000-0000-0002-000000000033',
+  '00000000-0000-0000-0002-000000000041',
+  '00000000-0000-0000-0002-000000000042',
+  '00000000-0000-0000-0002-000000000051',
+  '00000000-0000-0000-0002-000000000052',
+  '00000000-0000-0000-0002-000000000061',
+  '00000000-0000-0000-0002-000000000062',
+  '00000000-0000-0000-0002-000000000071',
+  '00000000-0000-0000-0002-000000000072',
+  '00000000-0000-0000-0002-000000000073',
+  '00000000-0000-0000-0002-000000000081',
+  '00000000-0000-0000-0002-000000000082',
+  '00000000-0000-0000-0002-000000000083',
+  '00000000-0000-0000-0002-000000000091',
+  '00000000-0000-0000-0002-000000000092',
+  '00000000-0000-0000-0002-000000000093',
+  '00000000-0000-0000-0002-000000000101',
+  '00000000-0000-0000-0002-000000000102',
+  '00000000-0000-0000-0002-000000000103'
+);
+
 insert into public.prayer_items (id, district_id, title, body, sort_order) values
-  ('00000000-0000-0000-0002-000000000011', '00000000-0000-0000-0001-000000000001', 'Young families', 'For the many young families who have moved in since the MTR arrived — that homes would be places of love and patience.', 1),
-  ('00000000-0000-0000-0002-000000000012', '00000000-0000-0000-0001-000000000001', 'University students', 'For HKU students living nearby: wisdom in study, healthy friendships and hope for the future.', 2),
-  ('00000000-0000-0000-0002-000000000021', '00000000-0000-0000-0001-000000000002', 'Elderly living alone', 'For older neighbours in walk-up flats — for companionship, health and people who visit them.', 1),
-  ('00000000-0000-0000-0002-000000000022', '00000000-0000-0000-0001-000000000002', 'Local shop owners', 'For family businesses facing high rents — provision and perseverance.', 2),
-  ('00000000-0000-0000-0002-000000000031', '00000000-0000-0000-0001-000000000003', 'Workers at the ferry piers', 'For those who travel and work around the Macau Ferry Terminal — safety and rest.', 1),
-  ('00000000-0000-0000-0002-000000000032', '00000000-0000-0000-0001-000000000003', 'Seekers of peace', 'That people searching for meaning in this historic district would find true peace.', 2),
-  ('00000000-0000-0000-0002-000000000041', '00000000-0000-0000-0001-000000000004', 'Business and finance', 'For integrity, generosity and rest for people working long hours in offices and banks.', 1),
-  ('00000000-0000-0000-0002-000000000042', '00000000-0000-0000-0001-000000000004', 'Domestic helpers', 'For the domestic workers who gather here on Sundays — encouragement, fair treatment and strong community.', 2),
-  ('00000000-0000-0000-0002-000000000043', '00000000-0000-0000-0001-000000000004', 'Churches in Central', 'For congregations serving the city centre to be salt and light.', 3),
-  ('00000000-0000-0000-0002-000000000051', '00000000-0000-0000-0001-000000000005', 'Leaders and officials', 'For wisdom, justice and compassion for those who govern and serve the public.', 1),
-  ('00000000-0000-0000-0002-000000000052', '00000000-0000-0000-0001-000000000005', 'Courts and lawyers', 'For truth and fairness in the courts nearby.', 2),
-  ('00000000-0000-0000-0002-000000000061', '00000000-0000-0000-0001-000000000006', 'The vulnerable', 'For people caught in addiction, exploitation or poverty — protection, freedom and restoration.', 1),
-  ('00000000-0000-0000-0002-000000000062', '00000000-0000-0000-0001-000000000006', 'Street markets', 'For hawkers and market workers on Tai Yuen Street and Cross Street.', 2),
-  ('00000000-0000-0000-0002-000000000071', '00000000-0000-0000-0001-000000000007', 'Young people', 'For teenagers and young adults who hang out here — identity, purpose and healthy hope.', 1),
-  ('00000000-0000-0000-0002-000000000072', '00000000-0000-0000-0001-000000000007', 'Retail workers', 'For shop staff working long holiday hours — patience, kindness from customers and rest.', 2),
-  ('00000000-0000-0000-0002-000000000081', '00000000-0000-0000-0001-000000000008', 'Fujianese community', 'For the many families with Fujian roots — blessing on homes, churches and associations.', 1),
-  ('00000000-0000-0000-0002-000000000082', '00000000-0000-0000-0001-000000000008', 'Market vendors', 'For vendors on Chun Yeung Street where the tram runs right through the market.', 2),
-  ('00000000-0000-0000-0002-000000000091', '00000000-0000-0000-0001-000000000009', 'Office workers', 'For people at Taikoo Place — healthy work-life balance and meaningful work.', 1),
-  ('00000000-0000-0000-0002-000000000092', '00000000-0000-0000-0001-000000000009', 'Estate residents', 'For neighbours in crowded estates — patience, kindness and community.', 2),
-  ('00000000-0000-0000-0002-000000000101', '00000000-0000-0000-0001-000000000010', 'Fishing families', 'For the descendants of the fishing community and their heritage.', 1),
-  ('00000000-0000-0000-0002-000000000102', '00000000-0000-0000-0001-000000000010', 'Schools and churches', 'For local schools and churches serving the eastern district.', 2),
+  ('00000000-0000-0000-0002-000000000011', '00000000-0000-0000-0001-000000000001', 'Elderly living alone', 'For older neighbours in walk-up flats — for companionship, health and people who visit them.', 1),
+  ('00000000-0000-0000-0002-000000000012', '00000000-0000-0000-0001-000000000001', 'Local shop owners', 'For family businesses facing high rents — provision and perseverance.', 2),
+  ('00000000-0000-0000-0002-000000000013', '00000000-0000-0000-0001-000000000001', 'University students', 'For HKU students living nearby: wisdom in study, healthy friendships and hope for the future.', 3),
+  ('00000000-0000-0000-0002-000000000021', '00000000-0000-0000-0001-000000000002', 'Workers at the ferry piers', 'For those who travel and work around the Macau Ferry Terminal — safety and rest.', 1),
+  ('00000000-0000-0000-0002-000000000022', '00000000-0000-0000-0001-000000000002', 'Seekers of peace', 'That people searching for meaning in this historic district would find true peace.', 2),
+  ('00000000-0000-0000-0002-000000000031', '00000000-0000-0000-0001-000000000003', 'Business and finance', 'For integrity, generosity and rest for people working long hours in offices and banks.', 1),
+  ('00000000-0000-0000-0002-000000000032', '00000000-0000-0000-0001-000000000003', 'Domestic helpers', 'For the domestic workers who gather here on Sundays — encouragement, fair treatment and strong community.', 2),
+  ('00000000-0000-0000-0002-000000000033', '00000000-0000-0000-0001-000000000003', 'Churches in Central', 'For congregations serving the city centre to be salt and light.', 3),
+  ('00000000-0000-0000-0002-000000000041', '00000000-0000-0000-0001-000000000004', 'Leaders and officials', 'For wisdom, justice and compassion for those who govern and serve the public.', 1),
+  ('00000000-0000-0000-0002-000000000042', '00000000-0000-0000-0001-000000000004', 'Courts and lawyers', 'For truth and fairness in the courts nearby.', 2),
+  ('00000000-0000-0000-0002-000000000051', '00000000-0000-0000-0001-000000000005', 'The vulnerable', 'For people caught in addiction, exploitation or poverty — protection, freedom and restoration.', 1),
+  ('00000000-0000-0000-0002-000000000052', '00000000-0000-0000-0001-000000000005', 'Street markets', 'For hawkers and market workers on Tai Yuen Street and Cross Street.', 2),
+  ('00000000-0000-0000-0002-000000000061', '00000000-0000-0000-0001-000000000006', 'Young people', 'For teenagers and young adults who hang out here — identity, purpose and healthy hope.', 1),
+  ('00000000-0000-0000-0002-000000000062', '00000000-0000-0000-0001-000000000006', 'Retail workers', 'For shop staff working long holiday hours — patience, kindness from customers and rest.', 2),
+  ('00000000-0000-0000-0002-000000000071', '00000000-0000-0000-0001-000000000007', 'Freedom from gambling', 'For people and families harmed by gambling — freedom, healing and real hope.', 1),
+  ('00000000-0000-0000-0002-000000000072', '00000000-0000-0000-0001-000000000007', 'Hospitals and carers', 'For patients, doctors and nurses in the hospitals nearby — comfort, skill and strength.', 2),
+  ('00000000-0000-0000-0002-000000000073', '00000000-0000-0000-0001-000000000007', 'Those who grieve', 'For families remembering loved ones this Christmas — the comfort of the God of all comfort.', 3),
+  ('00000000-0000-0000-0002-000000000081', '00000000-0000-0000-0001-000000000008', 'Ethnic minorities and refugees', 'For South and Southeast Asian neighbours and asylum seekers — welcome, dignity and provision.', 1),
+  ('00000000-0000-0000-0002-000000000082', '00000000-0000-0000-0001-000000000008', 'Social workers and NGOs', 'For people serving the poor and marginalised — strength, wisdom and joy in their work.', 2),
+  ('00000000-0000-0000-0002-000000000083', '00000000-0000-0000-0001-000000000008', 'Estate residents', 'For neighbours in crowded estates — patience, kindness and community.', 3),
+  ('00000000-0000-0000-0002-000000000091', '00000000-0000-0000-0001-000000000009', 'Unity of the church', 'For churches across Hong Kong to stand together in love and serve the city as one.', 1),
+  ('00000000-0000-0000-0002-000000000092', '00000000-0000-0000-0001-000000000009', 'Office workers', 'For people working late in the towers around us — healthy work-life balance and meaningful work.', 2),
+  ('00000000-0000-0000-0002-000000000093', '00000000-0000-0000-0001-000000000009', 'Peace for Hong Kong', 'For peace, healing and hope for our city and everyone who calls it home.', 3),
+  ('00000000-0000-0000-0002-000000000101', '00000000-0000-0000-0001-000000000010', 'Tram drivers and depot staff', 'Thanks for the drivers and staff who keep the "ding ding" running — safety, rest and blessing.', 1),
+  ('00000000-0000-0000-0002-000000000102', '00000000-0000-0000-0001-000000000010', 'Young families', 'For young families in the western district — that homes would be places of love and patience.', 2),
   ('00000000-0000-0000-0002-000000000103', '00000000-0000-0000-0001-000000000010', 'The year ahead', 'Thanksgiving for this evening and blessing on Hong Kong in the year ahead.', 3)
-on conflict (id) do update set title = excluded.title, body = excluded.body, sort_order = excluded.sort_order;
+on conflict (id) do update set district_id = excluded.district_id, title = excluded.title, body = excluded.body, sort_order = excluded.sort_order;
 
 -- Remove songs dropped from the set list.
 delete from public.songs where event_id = '00000000-0000-0000-0000-000000000001' and id not in (

@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TRAM_ROUTE } from '@/data/route';
 import { buildDistrictSpans, buildRouteIndex, districtAt, pointAt, snapToRoute } from '@/lib/geo';
 import { useGeolocation } from '@/lib/useGeolocation';
@@ -16,6 +16,9 @@ const TramMap = dynamic(() => import('@/components/TramMap'), {
 /** How far (m) from the tram line a GPS fix may be and still count as "on the tram". */
 const ON_ROUTE_THRESHOLD_M = 400;
 const SIM_STEP_M = 60;
+/** The route is a loop over shared streets, so GPS fixes are snapped relative to the last known progress. */
+const PROGRESS_KEY = 'tc.routeProgress';
+const PROGRESS_MAX_AGE_MS = 4 * 60 * 60 * 1000;
 
 type Source = 'gps' | 'simulate';
 
@@ -78,11 +81,25 @@ export default function RoutePage() {
   }, [playing, simAlong, route.length]);
 
   const geo = useGeolocation(source === 'gps');
+  const progressRef = useRef<number | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? 'null') as { along: number; at: number } | null;
+      if (saved && Date.now() - saved.at < PROGRESS_MAX_AGE_MS) progressRef.current = saved.along;
+    } catch {
+      // Ignore a corrupt saved value.
+    }
+  }, []);
   const snap = useMemo(
-    () => (source === 'gps' && geo.position ? snapToRoute(route, geo.position) : null),
+    () => (source === 'gps' && geo.position ? snapToRoute(route, geo.position, progressRef.current) : null),
     [source, geo.position, route],
   );
   const onRoute = !!snap && snap.distance <= ON_ROUTE_THRESHOLD_M;
+  useEffect(() => {
+    if (!snap || !onRoute) return;
+    progressRef.current = snap.along;
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ along: snap.along, at: Date.now() }));
+  }, [snap, onRoute]);
 
   let along: number | null = null;
   let tramPoint: [number, number] | null = null;
