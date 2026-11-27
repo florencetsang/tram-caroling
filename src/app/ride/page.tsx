@@ -10,7 +10,7 @@ import type { District } from '@/lib/types';
 
 const TramMap = dynamic(() => import('@/components/TramMap'), {
   ssr: false,
-  loading: () => <div className="h-64 w-full animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800 sm:h-80" />,
+  loading: () => <div className="h-64 w-full animate-pulse rounded-xl bg-ink-200 dark:bg-ink-800 sm:h-80" />,
 });
 
 /** How far (m) from the tram line a GPS fix may be and still count as "on the tram". */
@@ -19,18 +19,21 @@ const SIM_STEP_M = 60;
 
 type Source = 'gps' | 'simulate';
 
-function PrayerList({ district }: { district: District }) {
-  if (!district.prayer_items.length) return <p className="text-slate-500">No prayer items yet.</p>;
+function PrayerList({ district, onDark = false }: { district: District; onDark?: boolean }) {
+  if (!district.prayer_items.length)
+    return <p className={onDark ? 'text-ink-300' : 'text-ink-500'}>No prayer items yet.</p>;
   return (
     <ol className="space-y-3">
       {district.prayer_items.map((p, i) => (
         <li key={p.id} className="flex gap-3">
-          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-tram-100 text-sm font-bold text-tram-700 dark:bg-tram-900 dark:text-tram-100">
-            {i + 1}
+          <span className={`numeral mt-0.5 w-7 shrink-0 text-lg ${onDark ? 'text-gold-400' : ''}`}>
+            {String(i + 1).padStart(2, '0')}
           </span>
           <div>
-            <p className="text-lg font-semibold leading-snug">{p.title}</p>
-            <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">{p.body}</p>
+            <p className="font-serif text-xl leading-snug">{p.title}</p>
+            <p className={`text-base leading-relaxed ${onDark ? 'text-ink-200' : 'text-ink-700 dark:text-ink-300'}`}>
+              {p.body}
+            </p>
           </div>
         </li>
       ))}
@@ -113,7 +116,7 @@ export default function RoutePage() {
       locationHint = `You are about ${(snap.distance / 1000).toFixed(1)} km from the tram line. Tap a district below to follow along, or try Simulate.`;
   }
 
-  if (loading && !districts.length) return <p className="text-slate-500">Loading route…</p>;
+  if (loading && !districts.length) return <p className="text-ink-500">Loading route…</p>;
 
   return (
     <div className="space-y-4">
@@ -129,12 +132,12 @@ export default function RoutePage() {
       />
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <div className="inline-flex overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700">
+        <div className="inline-flex overflow-hidden rounded-lg border border-ink-300 dark:border-ink-700">
           {(['gps', 'simulate'] as Source[]).map((s) => (
             <button
               key={s}
               onClick={() => chooseSource(s)}
-              className={`px-3 py-1.5 font-semibold ${source === s ? 'bg-tram-700 text-white' : 'bg-white dark:bg-slate-900'}`}
+              className={`px-3 py-1.5 font-semibold ${source === s ? 'bg-tram-700 text-ink-100 dark:bg-gold-500 dark:text-ink-950' : 'bg-ink-50 dark:bg-ink-900'}`}
             >
               {s === 'gps' ? '📍 My location' : '🧪 Simulate'}
             </button>
@@ -164,66 +167,69 @@ export default function RoutePage() {
             max={Math.round(route.length)}
             value={Math.round(simAlong)}
             onChange={(e) => setSimAlong(Number(e.target.value))}
-            className="flex-1 accent-tram-700"
+            className="flex-1 accent-gold-500"
             aria-label="Simulated tram position"
           />
-          <span className="w-16 text-right text-sm tabular-nums text-slate-500">{(simAlong / 1000).toFixed(1)} km</span>
+          <span className="w-16 text-right text-sm tabular-nums text-ink-500">{(simAlong / 1000).toFixed(1)} km</span>
         </div>
       )}
 
       {locationHint && (
-        <p className="rounded-xl bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+        <p className="rounded-lg border-l-2 border-gold-500 bg-gold-100/70 p-3 text-sm text-ink-800 dark:bg-gold-900/30 dark:text-ink-100">
           {locationHint}
         </p>
       )}
 
-      <section className="card space-y-3 border-2 border-tram-600 dark:border-tram-600">
+      <section className="card space-y-3 border-tram-700 bg-tram-700 text-ink-100 dark:border-gold-500/40 dark:bg-ink-900">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-tram-700 dark:text-tram-500">Now passing</p>
-            <h2 className="text-3xl font-extrabold leading-tight">
+            <p className="eyebrow text-gold-300 dark:text-gold-400">Now passing</p>
+            <h2 className="mt-1 text-4xl leading-tight">
               {current ? current.name : 'Not on the line yet'}
-              {current?.name_zh && <span className="ml-2 text-xl font-semibold text-slate-500">{current.name_zh}</span>}
+              {current?.name_zh && <span className="ml-2 text-2xl text-gold-300">{current.name_zh}</span>}
             </h2>
-            {current?.description && <p className="text-slate-600 dark:text-slate-400">{current.description}</p>}
+            {current?.description && <p className="serif-italic mt-1 text-lg text-ink-200">{current.description}</p>}
           </div>
           {sourceLabel && (
-            <span className="chip shrink-0 bg-tram-100 text-tram-700 dark:bg-tram-900 dark:text-tram-100">{sourceLabel}</span>
+            <span className="chip shrink-0 border border-gold-400/50 text-gold-300">{sourceLabel}</span>
           )}
         </div>
         {current ? (
-          <PrayerList district={current} />
+          <PrayerList district={current} onDark />
         ) : (
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-ink-200">
             When the tram is moving, the current district and its prayer items appear here.
           </p>
         )}
         {next && (
-          <p className="border-t border-slate-200 pt-3 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
-            Next: <span className="font-semibold text-slate-900 dark:text-slate-100">{next.name}</span>
+          <p className="border-t border-ink-100/15 pt-3 text-sm text-ink-300">
+            Next: <span className="font-semibold text-ink-100">{next.name}</span>
             {next.prayer_items[0] && <> — {next.prayer_items[0].title}</>}
           </p>
         )}
       </section>
 
       <section className="space-y-2">
-        <h3 className="text-lg font-bold">All districts</h3>
+        <div className="pt-2">
+          <p className="eyebrow">Along the line</p>
+          <h3 className="mt-1 text-2xl">All districts</h3>
+        </div>
         {ordered.map((d) => {
           const open = selectedId === d.id;
           const isCurrent = d.id === currentId;
           return (
-            <div key={d.id} className={`card p-0 ${isCurrent ? 'ring-2 ring-berry-500' : ''}`}>
+            <div key={d.id} className={`card p-0 ${isCurrent ? 'ring-1 ring-gold-500' : ''}`}>
               <button
                 className="flex w-full items-center gap-3 p-4 text-left"
                 onClick={() => setSelectedId(open ? null : d.id)}
                 aria-expanded={open}
               >
                 <span className="flex-1">
-                  <span className="text-lg font-semibold">{d.name}</span>
-                  {d.name_zh && <span className="ml-2 text-slate-500">{d.name_zh}</span>}
+                  <span className="font-serif text-xl">{d.name}</span>
+                  {d.name_zh && <span className="ml-2 text-ink-500">{d.name_zh}</span>}
                 </span>
-                {isCurrent && <span className="chip bg-berry-600 text-white">Now</span>}
-                <span className="text-sm text-slate-500">{d.prayer_items.length} items</span>
+                {isCurrent && <span className="chip bg-gold-500 text-ink-950">Now</span>}
+                <span className="text-sm text-ink-500">{d.prayer_items.length} items</span>
                 <span aria-hidden>{open ? '▾' : '▸'}</span>
               </button>
               {open && (

@@ -25,8 +25,8 @@ function SignIn() {
           demoSignIn(name);
         }}
       >
-        <h2 className="text-xl font-bold">Join the ride</h2>
-        <p className="text-sm text-slate-500">Demo mode: no email needed. Your profile is saved on this device only.</p>
+        <h2 className="text-3xl">Join the ride</h2>
+        <p className="text-sm text-ink-500">Demo mode: no email needed. Your profile is saved on this device only.</p>
         <label className="block">
           <span className="label">Your name</span>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Grace Lam" required />
@@ -65,10 +65,10 @@ function SignIn() {
 
   return (
     <div className="card space-y-3">
-      <h2 className="text-xl font-bold">Sign in</h2>
+      <h2 className="text-3xl">Sign in</h2>
       {!sent ? (
         <form className="space-y-3" onSubmit={send}>
-          <p className="text-sm text-slate-500">We’ll email you a sign-in link and a one-time code. No password needed.</p>
+          <p className="text-sm text-ink-500">We’ll email you a sign-in link and a one-time code. No password needed.</p>
           <label className="block">
             <span className="label">Email</span>
             <input
@@ -87,7 +87,7 @@ function SignIn() {
         </form>
       ) : (
         <form className="space-y-3" onSubmit={verify}>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-ink-600 dark:text-ink-400">
             Check <strong>{email}</strong>. Tap the link in the email, or enter the code here.
           </p>
           <label className="block">
@@ -109,7 +109,7 @@ function SignIn() {
           </button>
         </form>
       )}
-      {message && <p className="text-sm text-berry-600">{message}</p>}
+      {message && <p className="text-sm text-[#8e3b2f] dark:text-[#e3a397]">{message}</p>}
     </div>
   );
 }
@@ -182,11 +182,11 @@ function ProfileEditor() {
             <input type="file" accept="image/*" className="hidden" onChange={(e) => onAvatar(e.target.files?.[0])} />
           </label>
           {form.avatar_url && (
-            <button type="button" className="ml-2 text-sm text-berry-600" onClick={() => set('avatar_url', null)}>
+            <button type="button" className="ml-2 text-sm text-[#8e3b2f] dark:text-[#e3a397]" onClick={() => set('avatar_url', null)}>
               Remove
             </button>
           )}
-          {user?.email && <p className="truncate text-sm text-slate-500">{user.email}</p>}
+          {user?.email && <p className="truncate text-sm text-ink-500">{user.email}</p>}
         </div>
       </div>
 
@@ -211,8 +211,8 @@ function ProfileEditor() {
 
       <div className="card space-y-3">
         <div>
-          <h3 className="text-lg font-bold">Connect with me</h3>
-          <p className="text-sm text-slate-500">Optional. Only fill in the accounts you’re happy for other signed-in participants to see.</p>
+          <h3 className="text-xl">Connect with me</h3>
+          <p className="text-sm text-ink-500">Optional. Only fill in the accounts you’re happy for other signed-in participants to see.</p>
         </div>
         {SOCIAL_KEYS.map((k) => (
           <label key={k} className="block">
@@ -238,7 +238,7 @@ function ProfileEditor() {
           </Link>
         )}
       </div>
-      {status && <p className="text-center text-sm text-slate-600 dark:text-slate-400">{status}</p>}
+      {status && <p className="text-center text-sm text-ink-600 dark:text-ink-400">{status}</p>}
 
       <button type="button" className="btn-secondary w-full" onClick={() => signOut()}>
         {mode === 'demo' ? 'Leave (demo sign out)' : 'Sign out'}
@@ -251,11 +251,11 @@ export default function MePage() {
   const { user, isAdmin } = useStore();
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Me</h2>
+      <h2 className="text-3xl">Me</h2>
       {user ? <ProfileEditor /> : <SignIn />}
       {!isAdmin && (
         <p className="text-center text-sm">
-          <Link href="/admin" className="text-slate-500 underline">
+          <Link href="/admin" className="text-ink-500 underline">
             Host controls
           </Link>
         </p>

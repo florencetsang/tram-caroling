@@ -17,7 +17,7 @@ interface Props {
   onSelectDistrict?: (id: string) => void;
 }
 
-const COLORS = ['#16a34a', '#0ea5e9'];
+const COLORS = ['#123d33', '#4f8a72'];
 
 export default function TramMap({
   route,
@@ -74,9 +74,9 @@ export default function TramMap({
       const isCurrent = span.id === currentDistrictId;
       const district = districts.find((d) => d.id === span.id);
       const line = L.polyline(sliceRoute(route, span.start, span.end), {
-        color: isCurrent ? '#dc2626' : COLORS[i % COLORS.length],
+        color: isCurrent ? '#b08d57' : COLORS[i % COLORS.length],
         weight: isCurrent ? 9 : 6,
-        opacity: isCurrent ? 0.95 : 0.75,
+        opacity: isCurrent ? 1 : 0.75,
       });
       if (district) {
         line.bindTooltip(district.name, { sticky: true });
@@ -92,12 +92,12 @@ export default function TramMap({
     if (!L || !layer) return;
     layer.clearLayers();
     if (userPoint) {
-      L.circleMarker(userPoint, { radius: 7, color: '#fff', weight: 2, fillColor: '#2563eb', fillOpacity: 1 })
+      L.circleMarker(userPoint, { radius: 7, color: '#fff', weight: 2, fillColor: '#123d33', fillOpacity: 1 })
         .bindTooltip('You')
         .addTo(layer);
     }
     if (tramPoint) {
-      L.circleMarker(tramPoint, { radius: 11, color: '#fff', weight: 3, fillColor: '#dc2626', fillOpacity: 1 })
+      L.circleMarker(tramPoint, { radius: 11, color: '#d2b886', weight: 3, fillColor: '#0b2e28', fillOpacity: 1 })
         .bindTooltip('Tram', { permanent: false })
         .addTo(layer);
       if (follow && mapRef.current) mapRef.current.panTo(tramPoint, { animate: true });
@@ -107,5 +107,5 @@ export default function TramMap({
   useEffect(drawRoute, [route, spans, districts, currentDistrictId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(drawMarkers, [tramPoint, userPoint, follow]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div ref={el} className="h-64 w-full overflow-hidden rounded-2xl sm:h-80" aria-label="Tram route map" />;
+  return <div ref={el} className="h-64 w-full overflow-hidden rounded-xl sm:h-80" aria-label="Tram route map" />;
 }

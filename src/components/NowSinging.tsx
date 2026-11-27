@@ -10,15 +10,15 @@ export function NowSinging() {
   if (!song && !eventState.announcement) return null;
 
   return (
-    <div className="space-y-1 bg-berry-600 px-4 py-2 text-white">
+    <div className="space-y-1 bg-gold-500 px-4 py-2 text-ink-950">
       {song && (
         <Link href={`/songs/${song.id}`} className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink-950 opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-ink-950" />
           </span>
-          <span className="text-xs uppercase tracking-wide opacity-90">Now singing</span>
-          <span className="flex-1 truncate font-bold">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] opacity-80">Now singing</span>
+          <span className="flex-1 truncate font-serif text-lg">
             {song.title}
             {eventState.current_section ? ` · ${eventState.current_section}` : ''}
           </span>

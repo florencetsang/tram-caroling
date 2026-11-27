@@ -43,7 +43,7 @@ export default function SongPage() {
   if (!song) {
     return (
       <div className="space-y-3">
-        <p className="text-slate-500">{loading ? 'Loading…' : 'Song not found.'}</p>
+        <p className="text-ink-500">{loading ? 'Loading…' : 'Song not found.'}</p>
         <Link href="/songs" className="btn-secondary">
           ← All songs
         </Link>
@@ -56,26 +56,26 @@ export default function SongPage() {
   return (
     <div className="space-y-4">
       <div>
-        <Link href="/songs" className="text-sm text-tram-700 dark:text-tram-500">
+        <Link href="/songs" className="text-sm text-gold-600 dark:text-gold-400">
           ← All songs
         </Link>
-        <h2 className="mt-1 text-3xl font-extrabold leading-tight">{song.title}</h2>
-        {song.author && <p className="text-slate-500">{song.author}</p>}
+        <h2 className="mt-1 text-4xl leading-tight">{song.title}</h2>
+        {song.author && <p className="serif-italic text-lg text-ink-500 dark:text-ink-300">{song.author}</p>}
         {isLive && (
-          <p className="mt-1 inline-block rounded-full bg-berry-600 px-3 py-0.5 text-sm font-semibold text-white">
+          <p className="mt-1 inline-block rounded-full bg-gold-500 px-3 py-0.5 text-sm font-semibold text-ink-950">
             Singing now{eventState.current_section ? ` · ${eventState.current_section}` : ''}
           </p>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-100 p-2 text-sm dark:bg-slate-900">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-ink-200 bg-ink-50 p-2 text-sm dark:border-ink-800 dark:bg-ink-900">
         {song.score_url && (
-          <div className="inline-flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700">
+          <div className="inline-flex overflow-hidden rounded-lg border border-ink-300 dark:border-ink-700">
             {(['lyrics', 'score'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-3 py-1 font-semibold ${tab === t ? 'bg-tram-700 text-white' : ''}`}
+                className={`px-3 py-1 font-semibold ${tab === t ? 'bg-tram-700 text-ink-100 dark:bg-gold-500 dark:text-ink-950' : ''}`}
               >
                 {t === 'lyrics' ? 'Lyrics' : 'Score'}
               </button>
