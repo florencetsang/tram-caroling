@@ -169,7 +169,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           .order('sort_order'),
         sb
           .from('songs')
-          .select('id, title, author, song_key, chordpro, score_url, sort_order')
+          .select('id, title, author, song_key, chordpro, score_url, sort_order, session')
           .eq('event_id', EVENT_ID)
           .order('sort_order'),
         sb.from('event_state').select('*').eq('event_id', EVENT_ID).maybeSingle(),

@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Tram Caroling',
-    short_name: 'Tram Carols',
+    name: 'HOLY NIGHT, CITY LIGHTS • DEC 13',
+    short_name: 'Holy Night',
     description: 'Route, prayer items and carols for the Hong Kong Island tram caroling event.',
     start_url: '/ride',
     display: 'standalone',

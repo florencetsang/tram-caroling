@@ -6,7 +6,7 @@ import type { District, PrayerItem, Profile, Song } from '@/lib/types';
  */
 
 export const DEFAULT_EVENT_ID = '00000000-0000-0000-0000-000000000001';
-export const DEMO_EVENT_NAME = 'HK Island Tram Caroling';
+export const DEMO_EVENT_NAME = 'HOLY NIGHT, CITY LIGHTS • DEC 13';
 
 const did = (n: number) => `00000000-0000-0000-0001-${String(n).padStart(12, '0')}`;
 const pid = (n: number) => `00000000-0000-0000-0002-${String(n).padStart(12, '0')}`;
@@ -147,11 +147,164 @@ export const DEMO_DISTRICTS: District[] = DISTRICT_SEEDS.map((d, i) => {
 export const DEMO_SONGS: Song[] = [
   {
     id: sid(1),
+    title: 'Hark! The Herald Angels Sing',
+    author: 'Charles Wesley / Felix Mendelssohn',
+    song_key: 'G',
+    score_url: null,
+    sort_order: 1,
+    session: '🎄 01 · Christmas Joy',
+    chordpro: `{title: Hark! The Herald Angels Sing}
+{subtitle: Charles Wesley / Felix Mendelssohn}
+{key: G}
+
+{start_of_verse: Verse 1}
+[G]Hark! the herald [D]angels [G]sing,
+"Glory [C]to the [D7]newborn [G]King;
+Peace on earth, and [D]mercy [G]mild,
+God and [Am]sinners [D]recon[G]ciled!"
+[G]Joyful, all ye [C]nations, [D7]rise,
+[G]Join the triumph [C]of the [D7]skies;
+[C]With th'angelic [Em]host pro[Am]claim,
+"[D]Christ is born in [G]Bethle[D]hem!"
+{end_of_verse}
+
+{start_of_chorus: Refrain}
+[C]Hark! the [Em]herald [Am]angels [D]sing,
+"[G]Glory [C]to the [D7]newborn [G]King!"
+{end_of_chorus}
+`,
+  },
+  {
+    id: sid(2),
+    title: '我要全心讚美',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 2,
+    session: '🎄 01 · Christmas Joy',
+    chordpro: `{title: 我要全心讚美}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(3),
+    title: 'Angels We Have Heard on High',
+    author: 'Traditional French carol, tr. James Chadwick',
+    song_key: 'F',
+    score_url: null,
+    sort_order: 3,
+    session: '🎄 01 · Christmas Joy',
+    chordpro: `{title: Angels We Have Heard on High}
+{subtitle: Traditional French carol, tr. James Chadwick}
+{key: F}
+
+{start_of_verse: Verse 1}
+[F]Angels we have [C]heard on [F]high,
+Sweetly [C]singing [F]o'er the [C]plains,
+[F]And the mountains [C]in re[F]ply
+Echo[C]ing their [F]joyous [C]strains.
+{end_of_verse}
+
+{start_of_chorus: Chorus}
+[F]Glo[Dm]-[Gm]-[C]-[F]-[Dm]-[Gm]-[C]-ria,
+[F]In ex[C]celsis [F]De[C]o!
+[F]Glo[Dm]-[Gm]-[C]-[F]-[Dm]-[Gm]-[C]-ria,
+[F]In ex[C]celsis [F]De[C]-[F]o!
+{end_of_chorus}
+
+{start_of_verse: Verse 2}
+[F]Shepherds, why this [C]jubi[F]lee?
+Why your [C]joyous [F]strains pro[C]long?
+[F]What the gladsome [C]tidings [F]be
+Which in[C]spire your [F]heavenly [C]song?
+{end_of_verse}
+
+{start_of_verse: Verse 3}
+[F]Come to Bethle[C]hem and [F]see
+Him whose [C]birth the [F]angels [C]sing;
+[F]Come, adore on [C]bended [F]knee
+Christ the [C]Lord, the [F]newborn [C]King.
+{end_of_verse}
+
+{comment: Repeat chorus}
+`,
+  },
+  {
+    id: sid(4),
+    title: '我向祢禱告',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 4,
+    session: '🎄 01 · Christmas Joy',
+    chordpro: `{title: 我向祢禱告}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(5),
+    title: 'Praise',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 5,
+    session: '🙌 02 · Wonder & Worship',
+    chordpro: `{title: Praise}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(6),
+    title: 'The First Noel',
+    author: 'Traditional English carol',
+    song_key: 'D',
+    score_url: null,
+    sort_order: 6,
+    session: '🙌 02 · Wonder & Worship',
+    chordpro: `{title: The First Noel}
+{subtitle: Traditional English carol}
+{key: D}
+
+{start_of_verse: Verse 1}
+The [D]first No[A]el the [D]angel [G]did [D]say
+Was to [G]certain poor [D]shepherds in [G]fields as they [A]lay;
+In [D]fields where [A]they [D]lay [G]keeping their [D]sheep,
+On a [G]cold winter's [D]night that [G]was [A]so [D]deep.
+{end_of_verse}
+
+{start_of_chorus: Chorus}
+No[D]el, No[A]el, No[D]el, No[G]-[D]el,
+[G]Born is the [D]King of [G]Is[A]ra[D]el.
+{end_of_chorus}
+
+{start_of_verse: Verse 2}
+They [D]looked [A]up and [D]saw a [G]star
+[D]Shining in the [G]east beyond [D]them far;
+And [D]to the [A]earth it [D]gave great [G]light,
+And [D]so it con[G]tinued both [D]day [A]and [D]night.
+{end_of_verse}
+
+{start_of_verse: Verse 3}
+Then [D]let us [A]all with [D]one ac[G]cord
+[D]Sing praises to our [G]heavenly [D]Lord,
+That [D]hath made [A]heaven and [D]earth of [G]nought,
+And [D]with His [G]blood man[D]kind [A]hath [D]bought.
+{end_of_verse}
+
+{comment: Repeat chorus}
+`,
+  },
+  {
+    id: sid(7),
     title: 'Silent Night',
     author: 'Joseph Mohr / Franz Gruber, tr. John F. Young',
     song_key: 'C',
     score_url: null,
-    sort_order: 1,
+    sort_order: 7,
+    session: '🙌 02 · Wonder & Worship',
     chordpro: `{title: Silent Night}
 {subtitle: Joseph Mohr / Franz Gruber, tr. John F. Young}
 {key: C}
@@ -185,12 +338,65 @@ export const DEMO_SONGS: Song[] = [
 `,
   },
   {
-    id: sid(2),
+    id: sid(8),
+    title: 'Holy Forever',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 8,
+    session: '🙌 02 · Wonder & Worship',
+    chordpro: `{title: Holy Forever}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(9),
+    title: '上帝早已預備',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 9,
+    session: '💛 03 · Hope to Carry Home',
+    chordpro: `{title: 上帝早已預備}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(10),
+    title: 'What a Beautiful Name',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 10,
+    session: '💛 03 · Hope to Carry Home',
+    chordpro: `{title: What a Beautiful Name}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(11),
+    title: 'Build My Life',
+    author: null,
+    song_key: null,
+    score_url: null,
+    sort_order: 11,
+    session: '💛 03 · Hope to Carry Home',
+    chordpro: `{title: Build My Life}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+`,
+  },
+  {
+    id: sid(12),
     title: 'Joy to the World',
     author: 'Isaac Watts / arr. Lowell Mason',
     song_key: 'D',
     score_url: null,
-    sort_order: 2,
+    sort_order: 12,
+    session: '💛 03 · Hope to Carry Home',
     chordpro: `{title: Joy to the World}
 {subtitle: Isaac Watts / arr. Lowell Mason}
 {key: D}
@@ -221,71 +427,6 @@ And wonders of His love,
 And [A]wonders of His love,
 [D]And [G]wonders, [D]wonders, [A]of His [D]love.
 {end_of_verse}
-`,
-  },
-  {
-    id: sid(3),
-    title: 'O Come, All Ye Faithful',
-    author: 'J. F. Wade, tr. Frederick Oakeley',
-    song_key: 'G',
-    score_url: null,
-    sort_order: 3,
-    chordpro: `{title: O Come, All Ye Faithful}
-{subtitle: J. F. Wade, tr. Frederick Oakeley}
-{key: G}
-
-{start_of_verse: Verse 1}
-[G]O come, all ye [D]faithful,
-[G]Joyful and tri[D]umphant,
-O [Em]come ye, O [D]come [A7]ye to [D]Bethlehem;
-[G]Come and be[D]hold Him,
-[G]Born the [C]King of [D]angels;
-{end_of_verse}
-
-{start_of_chorus: Chorus}
-[G]O come, let us a[D]dore Him,
-[G]O come, let us a[D]dore Him,
-O [G]come, let us [C]a[D]dore [Em]Him,
-[C]Christ [D]the [G]Lord.
-{end_of_chorus}
-
-{start_of_verse: Verse 2}
-[G]Sing, choirs of [D]angels,
-[G]Sing in exul[D]tation;
-O [Em]sing, all ye [D]citizens [A7]of heaven a[D]bove!
-[G]Glory to [D]God,
-[G]Glory [C]in the [D]highest;
-{end_of_verse}
-
-{comment: Repeat chorus}
-`,
-  },
-  {
-    id: sid(4),
-    title: 'Hark! The Herald Angels Sing',
-    author: 'Charles Wesley / Felix Mendelssohn',
-    song_key: 'G',
-    score_url: null,
-    sort_order: 4,
-    chordpro: `{title: Hark! The Herald Angels Sing}
-{subtitle: Charles Wesley / Felix Mendelssohn}
-{key: G}
-
-{start_of_verse: Verse 1}
-[G]Hark! the herald [D]angels [G]sing,
-"Glory [C]to the [D7]newborn [G]King;
-Peace on earth, and [D]mercy [G]mild,
-God and [Am]sinners [D]recon[G]ciled!"
-[G]Joyful, all ye [C]nations, [D7]rise,
-[G]Join the triumph [C]of the [D7]skies;
-[C]With th'angelic [Em]host pro[Am]claim,
-"[D]Christ is born in [G]Bethle[D]hem!"
-{end_of_verse}
-
-{start_of_chorus: Refrain}
-[C]Hark! the [Em]herald [Am]angels [D]sing,
-"[G]Glory [C]to the [D7]newborn [G]King!"
-{end_of_chorus}
 `,
   },
 ];

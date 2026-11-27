@@ -2,7 +2,7 @@
 -- Safe to re-run: existing rows are updated in place.
 
 insert into public.events (id, name, starts_at) values
-  ('00000000-0000-0000-0000-000000000001', 'HK Island Tram Caroling', '2026-12-19 19:00:00+08')
+  ('00000000-0000-0000-0000-000000000001', 'HOLY NIGHT, CITY LIGHTS • DEC 13', '2026-12-19 19:00:00+08')
 on conflict (id) do update set name = excluded.name, starts_at = excluded.starts_at;
 
 insert into public.districts (id, event_id, name, name_zh, description, sort_order, start_lat, start_lng) values
@@ -45,10 +45,132 @@ insert into public.prayer_items (id, district_id, title, body, sort_order) value
   ('00000000-0000-0000-0002-000000000103', '00000000-0000-0000-0001-000000000010', 'The year ahead', 'Thanksgiving for this evening and blessing on Hong Kong in the year ahead.', 3)
 on conflict (id) do update set title = excluded.title, body = excluded.body, sort_order = excluded.sort_order;
 
-insert into public.songs (id, event_id, title, author, song_key, sort_order, chordpro) values
+insert into public.songs (id, event_id, title, author, song_key, sort_order, session, chordpro) values
 (
   '00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0000-000000000001',
-  'Silent Night', 'Joseph Mohr / Franz Gruber, tr. John F. Young', 'C', 1,
+  'Hark! The Herald Angels Sing', 'Charles Wesley / Felix Mendelssohn', 'G', 1, '🎄 01 · Christmas Joy',
+$cp${title: Hark! The Herald Angels Sing}
+{subtitle: Charles Wesley / Felix Mendelssohn}
+{key: G}
+
+{start_of_verse: Verse 1}
+[G]Hark! the herald [D]angels [G]sing,
+"Glory [C]to the [D7]newborn [G]King;
+Peace on earth, and [D]mercy [G]mild,
+God and [Am]sinners [D]recon[G]ciled!"
+[G]Joyful, all ye [C]nations, [D7]rise,
+[G]Join the triumph [C]of the [D7]skies;
+[C]With th'angelic [Em]host pro[Am]claim,
+"[D]Christ is born in [G]Bethle[D]hem!"
+{end_of_verse}
+
+{start_of_chorus: Refrain}
+[C]Hark! the [Em]herald [Am]angels [D]sing,
+"[G]Glory [C]to the [D7]newborn [G]King!"
+{end_of_chorus}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000002', '00000000-0000-0000-0000-000000000001',
+  '我要全心讚美', null, null, 2, '🎄 01 · Christmas Joy',
+$cp${title: 我要全心讚美}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000003', '00000000-0000-0000-0000-000000000001',
+  'Angels We Have Heard on High', 'Traditional French carol, tr. James Chadwick', 'F', 3, '🎄 01 · Christmas Joy',
+$cp${title: Angels We Have Heard on High}
+{subtitle: Traditional French carol, tr. James Chadwick}
+{key: F}
+
+{start_of_verse: Verse 1}
+[F]Angels we have [C]heard on [F]high,
+Sweetly [C]singing [F]o'er the [C]plains,
+[F]And the mountains [C]in re[F]ply
+Echo[C]ing their [F]joyous [C]strains.
+{end_of_verse}
+
+{start_of_chorus: Chorus}
+[F]Glo[Dm]-[Gm]-[C]-[F]-[Dm]-[Gm]-[C]-ria,
+[F]In ex[C]celsis [F]De[C]o!
+[F]Glo[Dm]-[Gm]-[C]-[F]-[Dm]-[Gm]-[C]-ria,
+[F]In ex[C]celsis [F]De[C]-[F]o!
+{end_of_chorus}
+
+{start_of_verse: Verse 2}
+[F]Shepherds, why this [C]jubi[F]lee?
+Why your [C]joyous [F]strains pro[C]long?
+[F]What the gladsome [C]tidings [F]be
+Which in[C]spire your [F]heavenly [C]song?
+{end_of_verse}
+
+{start_of_verse: Verse 3}
+[F]Come to Bethle[C]hem and [F]see
+Him whose [C]birth the [F]angels [C]sing;
+[F]Come, adore on [C]bended [F]knee
+Christ the [C]Lord, the [F]newborn [C]King.
+{end_of_verse}
+
+{comment: Repeat chorus}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000004', '00000000-0000-0000-0000-000000000001',
+  '我向祢禱告', null, null, 4, '🎄 01 · Christmas Joy',
+$cp${title: 我向祢禱告}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000005', '00000000-0000-0000-0000-000000000001',
+  'Praise', null, null, 5, '🙌 02 · Wonder & Worship',
+$cp${title: Praise}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000006', '00000000-0000-0000-0000-000000000001',
+  'The First Noel', 'Traditional English carol', 'D', 6, '🙌 02 · Wonder & Worship',
+$cp${title: The First Noel}
+{subtitle: Traditional English carol}
+{key: D}
+
+{start_of_verse: Verse 1}
+The [D]first No[A]el the [D]angel [G]did [D]say
+Was to [G]certain poor [D]shepherds in [G]fields as they [A]lay;
+In [D]fields where [A]they [D]lay [G]keeping their [D]sheep,
+On a [G]cold winter's [D]night that [G]was [A]so [D]deep.
+{end_of_verse}
+
+{start_of_chorus: Chorus}
+No[D]el, No[A]el, No[D]el, No[G]-[D]el,
+[G]Born is the [D]King of [G]Is[A]ra[D]el.
+{end_of_chorus}
+
+{start_of_verse: Verse 2}
+They [D]looked [A]up and [D]saw a [G]star
+[D]Shining in the [G]east beyond [D]them far;
+And [D]to the [A]earth it [D]gave great [G]light,
+And [D]so it con[G]tinued both [D]day [A]and [D]night.
+{end_of_verse}
+
+{start_of_verse: Verse 3}
+Then [D]let us [A]all with [D]one ac[G]cord
+[D]Sing praises to our [G]heavenly [D]Lord,
+That [D]hath made [A]heaven and [D]earth of [G]nought,
+And [D]with His [G]blood man[D]kind [A]hath [D]bought.
+{end_of_verse}
+
+{comment: Repeat chorus}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000007', '00000000-0000-0000-0000-000000000001',
+  'Silent Night', 'Joseph Mohr / Franz Gruber, tr. John F. Young', 'C', 7, '🙌 02 · Wonder & Worship',
 $cp${title: Silent Night}
 {subtitle: Joseph Mohr / Franz Gruber, tr. John F. Young}
 {key: C}
@@ -82,8 +204,40 @@ $cp${title: Silent Night}
 $cp$
 ),
 (
-  '00000000-0000-0000-0003-000000000002', '00000000-0000-0000-0000-000000000001',
-  'Joy to the World', 'Isaac Watts / arr. Lowell Mason', 'D', 2,
+  '00000000-0000-0000-0003-000000000008', '00000000-0000-0000-0000-000000000001',
+  'Holy Forever', null, null, 8, '🙌 02 · Wonder & Worship',
+$cp${title: Holy Forever}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000009', '00000000-0000-0000-0000-000000000001',
+  '上帝早已預備', null, null, 9, '💛 03 · Hope to Carry Home',
+$cp${title: 上帝早已預備}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000010', '00000000-0000-0000-0000-000000000001',
+  'What a Beautiful Name', null, null, 10, '💛 03 · Hope to Carry Home',
+$cp${title: What a Beautiful Name}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000011', '00000000-0000-0000-0000-000000000001',
+  'Build My Life', null, null, 11, '💛 03 · Hope to Carry Home',
+$cp${title: Build My Life}
+
+{comment: Lyrics and chords to be added by an admin (licensed song).}
+$cp$
+),
+(
+  '00000000-0000-0000-0003-000000000012', '00000000-0000-0000-0000-000000000001',
+  'Joy to the World', 'Isaac Watts / arr. Lowell Mason', 'D', 12, '💛 03 · Hope to Carry Home',
 $cp${title: Joy to the World}
 {subtitle: Isaac Watts / arr. Lowell Mason}
 {key: D}
@@ -115,67 +269,10 @@ And [A]wonders of His love,
 [D]And [G]wonders, [D]wonders, [A]of His [D]love.
 {end_of_verse}
 $cp$
-),
-(
-  '00000000-0000-0000-0003-000000000003', '00000000-0000-0000-0000-000000000001',
-  'O Come, All Ye Faithful', 'J. F. Wade, tr. Frederick Oakeley', 'G', 3,
-$cp${title: O Come, All Ye Faithful}
-{subtitle: J. F. Wade, tr. Frederick Oakeley}
-{key: G}
-
-{start_of_verse: Verse 1}
-[G]O come, all ye [D]faithful,
-[G]Joyful and tri[D]umphant,
-O [Em]come ye, O [D]come [A7]ye to [D]Bethlehem;
-[G]Come and be[D]hold Him,
-[G]Born the [C]King of [D]angels;
-{end_of_verse}
-
-{start_of_chorus: Chorus}
-[G]O come, let us a[D]dore Him,
-[G]O come, let us a[D]dore Him,
-O [G]come, let us [C]a[D]dore [Em]Him,
-[C]Christ [D]the [G]Lord.
-{end_of_chorus}
-
-{start_of_verse: Verse 2}
-[G]Sing, choirs of [D]angels,
-[G]Sing in exul[D]tation;
-O [Em]sing, all ye [D]citizens [A7]of heaven a[D]bove!
-[G]Glory to [D]God,
-[G]Glory [C]in the [D]highest;
-{end_of_verse}
-
-{comment: Repeat chorus}
-$cp$
-),
-(
-  '00000000-0000-0000-0003-000000000004', '00000000-0000-0000-0000-000000000001',
-  'Hark! The Herald Angels Sing', 'Charles Wesley / Felix Mendelssohn', 'G', 4,
-$cp${title: Hark! The Herald Angels Sing}
-{subtitle: Charles Wesley / Felix Mendelssohn}
-{key: G}
-
-{start_of_verse: Verse 1}
-[G]Hark! the herald [D]angels [G]sing,
-"Glory [C]to the [D7]newborn [G]King;
-Peace on earth, and [D]mercy [G]mild,
-God and [Am]sinners [D]recon[G]ciled!"
-[G]Joyful, all ye [C]nations, [D7]rise,
-[G]Join the triumph [C]of the [D7]skies;
-[C]With th'angelic [Em]host pro[Am]claim,
-"[D]Christ is born in [G]Bethle[D]hem!"
-{end_of_verse}
-
-{start_of_chorus: Refrain}
-[C]Hark! the [Em]herald [Am]angels [D]sing,
-"[G]Glory [C]to the [D7]newborn [G]King!"
-{end_of_chorus}
-$cp$
 )
 on conflict (id) do update set
   title = excluded.title, author = excluded.author, song_key = excluded.song_key,
-  sort_order = excluded.sort_order, chordpro = excluded.chordpro;
+  sort_order = excluded.sort_order, session = excluded.session, chordpro = excluded.chordpro;
 
 insert into public.event_state (event_id) values ('00000000-0000-0000-0000-000000000001')
 on conflict (event_id) do nothing;

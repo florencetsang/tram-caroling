@@ -23,6 +23,9 @@ export default function SongsPage() {
       <ul className="space-y-2">
         {songs.map((s, i) => (
           <li key={s.id}>
+            {s.session && s.session !== songs[i - 1]?.session && (
+              <h3 className="pb-1 pt-3 text-sm font-bold uppercase tracking-wide text-berry-600">{s.session}</h3>
+            )}
             <Link href={`/songs/${s.id}`} className="card flex items-center gap-3">
               <span className="w-6 text-right text-lg font-bold text-slate-400">{i + 1}</span>
               <span className="flex-1">
