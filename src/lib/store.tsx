@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { DEMO_DISTRICTS, DEMO_EVENT_NAME, DEMO_PROFILES, DEMO_SONGS } from '@/data/demo';
+import { DEMO_DISTRICTS, DEMO_EVENT_NAME, DEMO_ROSTER, DEMO_SONGS } from '@/data/demo';
 import { dataUrlToBlob, resizeImage } from '@/lib/image';
 import { EVENT_ID, getSupabase, isDemoMode } from '@/lib/supabase';
 import {
@@ -18,12 +18,22 @@ import {
   type AppUser,
   type District,
   type EventState,
+  type ParticipantInput,
+  type PrayerCard,
+  type PrayerPartner,
   type Profile,
+  type RosterEntry,
   type Song,
 } from '@/lib/types';
 
 export type EventStatePatch = Partial<Omit<EventState, 'updated_at'>>;
 export type ProfileInput = Omit<Profile, 'id'>;
+export type PrayerCardInput = Omit<PrayerCard, 'profile_id'>;
+export interface ImportResult {
+  added: number;
+  merged?: number;
+  skipped: number;
+}
 
 interface StoreValue {
   mode: 'demo' | 'supabase';
@@ -36,16 +46,24 @@ interface StoreValue {
   profiles: Profile[];
   user: AppUser | null;
   myProfile: Profile | null;
+  myCard: PrayerCard | null;
+  /** My prayer partner(s); empty until a host starts the prayer partner session. */
+  partners: PrayerPartner[];
   isAdmin: boolean;
   updateEventState(patch: EventStatePatch): Promise<void>;
   saveProfile(input: ProfileInput): Promise<void>;
+  savePrayerCard(input: PrayerCardInput): Promise<void>;
   uploadAvatar(file: File): Promise<string>;
-  sendSignInEmail(email: string): Promise<void>;
-  verifyCode(email: string, code: string): Promise<void>;
-  demoSignIn(name: string): void;
+  signInWithCode(code: string): Promise<void>;
   signOut(): Promise<void>;
   setDemoAdmin(on: boolean): void;
   refresh(): Promise<void>;
+  // Host tools
+  loadRoster(): Promise<RosterEntry[]>;
+  importParticipants(rows: ParticipantInput[]): Promise<ImportResult>;
+  removeParticipant(profileId: string): Promise<void>;
+  addPrayerGroups(groups: string[][]): Promise<void>;
+  removePrayerGroup(groupNo: number): Promise<void>;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -53,7 +71,7 @@ const StoreContext = createContext<StoreValue | null>(null);
 const KEYS = {
   demoState: 'tc.demo.eventState',
   demoUser: 'tc.demo.user',
-  demoProfile: 'tc.demo.profile',
+  demoRoster: 'tc.demo.roster',
   demoAdmin: 'tc.demo.admin',
   cache: `tc.cache.${EVENT_ID}`,
 };
@@ -83,6 +101,7 @@ function toEventState(row: Record<string, unknown> | null | undefined): EventSta
     current_section: (row.current_section as string | null) ?? null,
     district_override_id: (row.district_override_id as string | null) ?? null,
     announcement: (row.announcement as string | null) ?? null,
+    prayer_partners_on: row.prayer_partners_on === true,
     updated_at: (row.updated_at as string) ?? new Date().toISOString(),
   };
 }
@@ -94,12 +113,31 @@ function toProfile(row: Record<string, unknown>): Profile {
     avatar_url: (row.avatar_url as string | null) ?? null,
     bio: (row.bio as string | null) ?? null,
     church: (row.church as string | null) ?? null,
+    gender: (row.gender as string | null) ?? null,
+    day_off: (row.day_off as string | null) ?? null,
+    mbti: (row.mbti as string | null) ?? null,
     socials: (row.socials as Profile['socials']) ?? {},
     visible: row.visible !== false,
   };
 }
 
+function toCard(row: Record<string, unknown> | null | undefined): PrayerCard | null {
+  if (!row) return null;
+  return {
+    profile_id: row.profile_id as string,
+    conversation_starter: (row.conversation_starter as string | null) ?? null,
+    prayer_request: (row.prayer_request as string | null) ?? null,
+  };
+}
+
 const byName = (a: Profile, b: Profile) => a.display_name.localeCompare(b.display_name);
+const normalizeCode = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+function demoCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => alphabet[b % 32]).join('');
+}
 
 interface CachedContent {
   eventName: string;
@@ -116,10 +154,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [districts, setDistricts] = useState<District[]>(demo ? DEMO_DISTRICTS : []);
   const [songs, setSongs] = useState<Song[]>(demo ? DEMO_SONGS : []);
   const [eventState, setEventStateRaw] = useState<EventState>(EMPTY_EVENT_STATE);
-  const [otherProfiles, setOtherProfiles] = useState<Profile[]>(demo ? DEMO_PROFILES : []);
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [myProfile, setMyProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Supabase-mode people data.
+  const [authUid, setAuthUid] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [sbProfiles, setSbProfiles] = useState<Profile[]>([]);
+  const [sbMe, setSbMe] = useState<Profile | null>(null);
+  const [sbCard, setSbCard] = useState<PrayerCard | null>(null);
+  const [sbPartners, setSbPartners] = useState<PrayerPartner[]>([]);
+
+  // Demo-mode people data (everything lives in localStorage).
+  const [demoRoster, setDemoRosterRaw] = useState<RosterEntry[]>([]);
+  const [demoUser, setDemoUser] = useState<AppUser | null>(null);
 
   const eventStateRef = useRef(eventState);
   const setEventState = useCallback((s: EventState) => {
@@ -128,12 +175,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
+  const demoRosterRef = useRef(demoRoster);
+  const setDemoRoster = useCallback((r: RosterEntry[], broadcast = true) => {
+    demoRosterRef.current = r;
+    setDemoRosterRaw(r);
+    if (broadcast) {
+      writeJSON(KEYS.demoRoster, r);
+      channelRef.current?.postMessage({ type: 'roster' });
+    }
+  }, []);
+
   // ---------- Demo mode ----------
   useEffect(() => {
     if (!demo) return;
-    setEventState(readJSON<EventState>(KEYS.demoState) ?? EMPTY_EVENT_STATE);
-    setUser(readJSON<AppUser>(KEYS.demoUser));
-    setMyProfile(readJSON<Profile>(KEYS.demoProfile));
+    const loadRosterFromStorage = () =>
+      setDemoRoster(
+        readJSON<RosterEntry[]>(KEYS.demoRoster) ?? DEMO_ROSTER.map((p) => ({ ...p, form_key: null })),
+        false,
+      );
+    setEventState({ ...EMPTY_EVENT_STATE, ...readJSON<EventState>(KEYS.demoState) });
+    loadRosterFromStorage();
+    setDemoUser(readJSON<AppUser>(KEYS.demoUser));
     setIsAdmin(readJSON<boolean>(KEYS.demoAdmin) === true);
 
     // Sync "live" state between tabs/windows of this browser to mimic realtime.
@@ -142,10 +204,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (channel) {
       channel.onmessage = (e: MessageEvent) => {
         if (e.data?.type === 'state') setEventState(e.data.state as EventState);
+        if (e.data?.type === 'roster') loadRosterFromStorage();
       };
     }
     const onStorage = (e: StorageEvent) => {
-      if (e.key === KEYS.demoState) setEventState(readJSON<EventState>(KEYS.demoState) ?? EMPTY_EVENT_STATE);
+      if (e.key === KEYS.demoState) setEventState({ ...EMPTY_EVENT_STATE, ...readJSON<EventState>(KEYS.demoState) });
+      if (e.key === KEYS.demoRoster) loadRosterFromStorage();
     };
     window.addEventListener('storage', onStorage);
     return () => {
@@ -153,7 +217,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       channelRef.current = null;
       window.removeEventListener('storage', onStorage);
     };
-  }, [demo, setEventState]);
+  }, [demo, setEventState, setDemoRoster]);
 
   // ---------- Supabase: content + realtime ----------
   const loadContent = useCallback(async () => {
@@ -197,7 +261,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setEventName(cached.eventName);
         setDistricts(cached.districts);
         setSongs(cached.songs);
-        setEventState(cached.eventState);
+        setEventState({ ...EMPTY_EVENT_STATE, ...cached.eventState });
         setError('Offline — showing saved content.');
       } else {
         setError(e instanceof Error ? e.message : 'Could not load event data.');
@@ -215,7 +279,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setEventName(cached.eventName);
       setDistricts(cached.districts);
       setSongs(cached.songs);
-      setEventState(cached.eventState);
+      setEventState({ ...EMPTY_EVENT_STATE, ...cached.eventState });
       setLoading(false);
     }
     loadContent();
@@ -245,44 +309,132 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
   }, [loadContent, setEventState]);
 
-  // ---------- Supabase: auth ----------
+  // ---------- Supabase: auth (anonymous session linked to a participant) ----------
   useEffect(() => {
     const sb = getSupabase();
     if (!sb) return;
-    sb.auth.getSession().then(({ data }) => {
-      const u = data.session?.user;
-      setUser(u ? { id: u.id, email: u.email ?? null } : null);
-    });
-    const { data } = sb.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user;
-      setUser((prev) => (u ? (prev?.id === u.id ? prev : { id: u.id, email: u.email ?? null }) : null));
-    });
+    sb.auth.getSession().then(({ data }) => setAuthUid(data.session?.user.id ?? null));
+    const { data } = sb.auth.onAuthStateChange((_event, session) => setAuthUid(session?.user.id ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
 
-  const loadPeople = useCallback(async (uid: string) => {
+  useEffect(() => {
     const sb = getSupabase();
     if (!sb) return;
-    const [me, list, role] = await Promise.all([
-      sb.from('profiles').select('*').eq('id', uid).maybeSingle(),
-      sb.from('profiles').select('*').eq('visible', true).order('display_name'),
-      sb.from('event_roles').select('role').eq('event_id', EVENT_ID).eq('user_id', uid).maybeSingle(),
+    if (!authUid) {
+      setProfileId(null);
+      return;
+    }
+    let cancelled = false;
+    sb.from('profile_logins')
+      .select('profile_id')
+      .eq('user_id', authUid)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setProfileId((data?.profile_id as string | undefined) ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authUid]);
+
+  const loadPeople = useCallback(async (pid: string) => {
+    const sb = getSupabase();
+    if (!sb) return;
+    const [me, list, role, card] = await Promise.all([
+      sb.from('profiles').select('*').eq('id', pid).maybeSingle(),
+      sb.from('profiles').select('*').eq('event_id', EVENT_ID).eq('visible', true).order('display_name'),
+      sb.from('event_roles').select('role').eq('event_id', EVENT_ID).eq('profile_id', pid).maybeSingle(),
+      sb.from('prayer_cards').select('*').eq('profile_id', pid).maybeSingle(),
     ]);
-    setMyProfile(me.data ? toProfile(me.data as Record<string, unknown>) : null);
-    setOtherProfiles(((list.data ?? []) as Record<string, unknown>[]).map(toProfile).filter((p) => p.id !== uid));
+    if (!me.error && !me.data) {
+      // This participant was removed by a host.
+      setProfileId(null);
+      return;
+    }
+    if (me.data) setSbMe(toProfile(me.data as Record<string, unknown>));
+    setSbProfiles(((list.data ?? []) as Record<string, unknown>[]).map(toProfile));
     setIsAdmin(role.data?.role === 'admin');
+    setSbCard(toCard(card.data as Record<string, unknown> | null));
   }, []);
 
   useEffect(() => {
     if (demo) return;
-    if (!user) {
-      setMyProfile(null);
-      setOtherProfiles([]);
+    if (!profileId) {
+      setSbMe(null);
+      setSbProfiles([]);
+      setSbCard(null);
       setIsAdmin(false);
       return;
     }
-    loadPeople(user.id);
-  }, [demo, user, loadPeople]);
+    loadPeople(profileId);
+  }, [demo, profileId, loadPeople]);
+
+  const partnersOn = eventState.prayer_partners_on;
+  const loadPartners = useCallback(async (pid: string) => {
+    const sb = getSupabase();
+    if (!sb) return;
+    const { data: rows } = await sb.from('prayer_partners').select('profile_id, group_no').eq('event_id', EVENT_ID);
+    const mine = rows?.find((r) => r.profile_id === pid);
+    const ids = mine
+      ? rows!.filter((r) => r.group_no === mine.group_no && r.profile_id !== pid).map((r) => r.profile_id as string)
+      : [];
+    if (!ids.length) {
+      setSbPartners([]);
+      return;
+    }
+    const [ps, cs] = await Promise.all([
+      sb.from('profiles').select('*').in('id', ids),
+      sb.from('prayer_cards').select('*').in('profile_id', ids),
+    ]);
+    const cards = ((cs.data ?? []) as Record<string, unknown>[]).map((c) => toCard(c)!);
+    setSbPartners(
+      ((ps.data ?? []) as Record<string, unknown>[])
+        .map(toProfile)
+        .sort(byName)
+        .map((profile) => ({ profile, card: cards.find((c) => c.profile_id === profile.id) ?? null })),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (demo) return;
+    if (!profileId || !partnersOn) {
+      setSbPartners([]);
+      return;
+    }
+    loadPartners(profileId);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadPartners(profileId);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [demo, profileId, partnersOn, loadPartners]);
+
+  // ---------- Derived people data ----------
+  const user: AppUser | null = useMemo(() => {
+    if (demo) return demoUser && demoRoster.some((r) => r.profile.id === demoUser.profile_id) ? demoUser : null;
+    return authUid && profileId ? { id: authUid, profile_id: profileId } : null;
+  }, [demo, demoUser, demoRoster, authUid, profileId]);
+
+  const myEntry = demo && user ? demoRoster.find((r) => r.profile.id === user.profile_id) ?? null : null;
+  const myProfile = demo ? myEntry?.profile ?? null : user ? sbMe : null;
+  const myCard = demo ? myEntry?.card ?? null : user ? sbCard : null;
+
+  const partners: PrayerPartner[] = useMemo(() => {
+    if (!demo) return sbPartners;
+    if (!partnersOn || !myEntry || myEntry.group_no === null) return [];
+    return demoRoster
+      .filter((r) => r.group_no === myEntry.group_no && r.profile.id !== myEntry.profile.id)
+      .map((r) => ({ profile: r.profile, card: r.card }))
+      .sort((a, b) => byName(a.profile, b.profile));
+  }, [demo, sbPartners, partnersOn, myEntry, demoRoster]);
+
+  const profiles = useMemo(() => {
+    if (demo) return demoRoster.map((r) => r.profile).filter((p) => p.visible).sort(byName);
+    const list = sbProfiles.filter((p) => p.id !== sbMe?.id);
+    if (sbMe?.visible && user) list.push(sbMe);
+    return list.sort(byName);
+  }, [demo, demoRoster, sbProfiles, sbMe, user]);
 
   // ---------- Actions ----------
   const updateEventState = useCallback(
@@ -301,31 +453,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         current_section: next.current_section,
         district_override_id: next.district_override_id,
         announcement: next.announcement,
+        prayer_partners_on: next.prayer_partners_on,
         updated_at: next.updated_at,
-        updated_by: user?.id ?? null,
+        updated_by: authUid,
       });
       if (err) throw new Error(err.message);
     },
-    [demo, setEventState, user],
+    [demo, setEventState, authUid],
+  );
+
+  const updateDemoEntry = useCallback(
+    (profileId: string, fn: (r: RosterEntry) => RosterEntry) =>
+      setDemoRoster(demoRosterRef.current.map((r) => (r.profile.id === profileId ? fn(r) : r))),
+    [setDemoRoster],
   );
 
   const saveProfile = useCallback(
     async (input: ProfileInput) => {
       if (!user) throw new Error('Please sign in first.');
-      const profile: Profile = { ...input, id: user.id };
       if (demo) {
-        writeJSON(KEYS.demoProfile, profile);
-        setMyProfile(profile);
+        updateDemoEntry(user.profile_id, (r) => ({ ...r, profile: { ...input, id: user.profile_id } }));
         return;
       }
       const sb = getSupabase()!;
       const { error: err } = await sb
         .from('profiles')
-        .upsert({ ...profile, updated_at: new Date().toISOString() });
+        .update({ ...input, updated_at: new Date().toISOString() })
+        .eq('id', user.profile_id);
       if (err) throw new Error(err.message);
-      await loadPeople(user.id);
+      await loadPeople(user.profile_id);
     },
-    [demo, user, loadPeople],
+    [demo, user, loadPeople, updateDemoEntry],
+  );
+
+  const savePrayerCard = useCallback(
+    async (input: PrayerCardInput) => {
+      if (!user) throw new Error('Please sign in first.');
+      const card: PrayerCard = { ...input, profile_id: user.profile_id };
+      if (demo) {
+        updateDemoEntry(user.profile_id, (r) => ({ ...r, card }));
+        return;
+      }
+      const sb = getSupabase()!;
+      const { error: err } = await sb.from('prayer_cards').upsert({ ...card, updated_at: new Date().toISOString() });
+      if (err) throw new Error(err.message);
+      setSbCard(card);
+    },
+    [demo, user, updateDemoEntry],
   );
 
   const uploadAvatar = useCallback(
@@ -344,45 +518,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [demo, user],
   );
 
-  const sendSignInEmail = useCallback(async (email: string) => {
-    const sb = getSupabase();
-    if (!sb) return;
-    const { error: err } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/me`, shouldCreateUser: true },
-    });
-    if (err) throw new Error(err.message);
-  }, []);
-
-  const verifyCode = useCallback(async (email: string, code: string) => {
-    const sb = getSupabase();
-    if (!sb) return;
-    const { error: err } = await sb.auth.verifyOtp({ email, token: code.trim(), type: 'email' });
-    if (err) throw new Error(err.message);
-  }, []);
-
-  const demoSignIn = useCallback((name: string) => {
-    const u: AppUser = { id: 'demo-me', email: null };
-    writeJSON(KEYS.demoUser, u);
-    setUser(u);
-    const existing = readJSON<Profile>(KEYS.demoProfile);
-    const profile: Profile = existing ?? {
-      id: u.id,
-      display_name: name.trim() || 'Me',
-      avatar_url: null,
-      bio: null,
-      church: null,
-      socials: {},
-      visible: true,
-    };
-    writeJSON(KEYS.demoProfile, profile);
-    setMyProfile(profile);
-  }, []);
+  const signInWithCode = useCallback(
+    async (code: string) => {
+      const normalized = normalizeCode(code);
+      if (!normalized) throw new Error('Please enter your sign-in ID.');
+      if (demo) {
+        const entry = demoRosterRef.current.find((r) => r.code === normalized);
+        if (!entry) throw new Error('That sign-in ID was not recognised. Please check it and try again.');
+        const u: AppUser = { id: 'demo-device', profile_id: entry.profile.id };
+        writeJSON(KEYS.demoUser, u);
+        setDemoUser(u);
+        return;
+      }
+      const sb = getSupabase()!;
+      const { data } = await sb.auth.getSession();
+      let uid = data.session?.user.id ?? null;
+      if (!uid) {
+        const { data: anon, error: anonErr } = await sb.auth.signInAnonymously();
+        if (anonErr) throw new Error(anonErr.message);
+        uid = anon.user?.id ?? null;
+      }
+      const { data: pid, error: err } = await sb.rpc('claim_sign_in', { p_code: normalized });
+      if (err) throw new Error(err.message);
+      setAuthUid(uid);
+      setProfileId(pid as string);
+    },
+    [demo],
+  );
 
   const signOut = useCallback(async () => {
     if (demo) {
       writeJSON(KEYS.demoUser, null);
-      setUser(null);
+      setDemoUser(null);
       return;
     }
     await getSupabase()?.auth.signOut();
@@ -400,14 +567,164 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (demo) return;
     await loadContent();
-    if (user) await loadPeople(user.id);
-  }, [demo, loadContent, loadPeople, user]);
+    if (profileId) {
+      await loadPeople(profileId);
+      if (eventStateRef.current.prayer_partners_on) await loadPartners(profileId);
+    }
+  }, [demo, loadContent, loadPeople, loadPartners, profileId]);
 
-  const profiles = useMemo(() => {
-    const list = [...otherProfiles];
-    if (myProfile && myProfile.visible && user) list.push(myProfile);
-    return list.sort(byName);
-  }, [otherProfiles, myProfile, user]);
+  // ---------- Host tools ----------
+  const loadRoster = useCallback(async (): Promise<RosterEntry[]> => {
+    if (demo) return demoRosterRef.current;
+    const sb = getSupabase()!;
+    const [ps, codes, cards, groups, roles] = await Promise.all([
+      sb.from('profiles').select('*').eq('event_id', EVENT_ID).order('display_name'),
+      sb.from('sign_in_codes').select('profile_id, code'),
+      sb.from('prayer_cards').select('*'),
+      sb.from('prayer_partners').select('profile_id, group_no').eq('event_id', EVENT_ID),
+      sb.from('event_roles').select('profile_id').eq('event_id', EVENT_ID).eq('role', 'admin'),
+    ]);
+    const firstError = ps.error || codes.error || cards.error || groups.error || roles.error;
+    if (firstError) throw new Error(firstError.message);
+    return ((ps.data ?? []) as Record<string, unknown>[]).map((row) => {
+      const id = row.id as string;
+      return {
+        profile: toProfile(row),
+        form_key: (row.form_key as string | null) ?? null,
+        code: (codes.data?.find((c) => c.profile_id === id)?.code as string | undefined) ?? null,
+        card: toCard((cards.data as Record<string, unknown>[] | null)?.find((c) => c.profile_id === id)),
+        group_no: (groups.data?.find((g) => g.profile_id === id)?.group_no as number | undefined) ?? null,
+        is_host: roles.data?.some((r) => r.profile_id === id) ?? false,
+      };
+    });
+  }, [demo]);
+
+  const importParticipants = useCallback(
+    async (rows: ParticipantInput[]): Promise<ImportResult> => {
+      if (demo) {
+        const roster = [...demoRosterRef.current];
+        const result: ImportResult = { added: 0, merged: 0, skipped: 0 };
+        for (const row of rows) {
+          const name = row.display_name.trim().slice(0, 60);
+          if (!name || (row.form_key && roster.some((r) => r.form_key === row.form_key))) {
+            result.skipped++;
+            continue;
+          }
+          const match = row.form_key
+            ? roster.findIndex((r) => !r.form_key && r.profile.display_name.toLowerCase() === name.toLowerCase())
+            : -1;
+          if (match >= 0) {
+            const r = roster[match];
+            roster[match] = {
+              ...r,
+              form_key: row.form_key,
+              profile: {
+                ...r.profile,
+                gender: r.profile.gender ?? row.gender,
+                day_off: r.profile.day_off ?? row.day_off,
+                mbti: r.profile.mbti ?? row.mbti,
+              },
+              card: {
+                profile_id: r.profile.id,
+                conversation_starter: r.card?.conversation_starter ?? row.conversation_starter,
+                prayer_request: r.card?.prayer_request ?? row.prayer_request,
+              },
+            };
+            result.merged!++;
+            continue;
+          }
+          const id = `demo-${crypto.randomUUID()}`;
+          roster.push({
+            profile: {
+              id,
+              display_name: name,
+              avatar_url: null,
+              bio: null,
+              church: null,
+              gender: row.gender,
+              day_off: row.day_off,
+              mbti: row.mbti,
+              socials: {},
+              visible: true,
+            },
+            form_key: row.form_key,
+            code: demoCode(),
+            card: { profile_id: id, conversation_starter: row.conversation_starter, prayer_request: row.prayer_request },
+            group_no: null,
+          });
+          result.added++;
+        }
+        setDemoRoster(roster);
+        return result;
+      }
+      const sb = getSupabase()!;
+      const { data, error: err } = await sb.rpc('admin_import_participants', { p_event: EVENT_ID, p_rows: rows });
+      if (err) throw new Error(err.message);
+      if (profileId) await loadPeople(profileId);
+      return data as ImportResult;
+    },
+    [demo, setDemoRoster, profileId, loadPeople],
+  );
+
+  const removeParticipant = useCallback(
+    async (id: string) => {
+      if (demo) {
+        setDemoRoster(demoRosterRef.current.filter((r) => r.profile.id !== id));
+        return;
+      }
+      const sb = getSupabase()!;
+      const { error: err } = await sb.from('profiles').delete().eq('id', id);
+      if (err) throw new Error(err.message);
+      if (profileId) await loadPeople(profileId);
+    },
+    [demo, setDemoRoster, profileId, loadPeople],
+  );
+
+  const addPrayerGroups = useCallback(
+    async (groups: string[][]) => {
+      const ids = groups.flat();
+      if (!ids.length) return;
+      if (demo) {
+        let next = Math.max(0, ...demoRosterRef.current.map((r) => r.group_no ?? 0)) + 1;
+        const assigned = new Map<string, number>();
+        groups.forEach((g) => {
+          const n = next++;
+          g.forEach((id) => assigned.set(id, n));
+        });
+        setDemoRoster(demoRosterRef.current.map((r) => (assigned.has(r.profile.id) ? { ...r, group_no: assigned.get(r.profile.id)! } : r)));
+        return;
+      }
+      const sb = getSupabase()!;
+      const { data: existing, error: readErr } = await sb
+        .from('prayer_partners')
+        .select('group_no')
+        .eq('event_id', EVENT_ID)
+        .order('group_no', { ascending: false })
+        .limit(1);
+      if (readErr) throw new Error(readErr.message);
+      let next = ((existing?.[0]?.group_no as number | undefined) ?? 0) + 1;
+      const rows = groups.flatMap((g) => {
+        const n = next++;
+        return g.map((profile_id) => ({ profile_id, event_id: EVENT_ID, group_no: n }));
+      });
+      const { error: err } = await sb.from('prayer_partners').upsert(rows);
+      if (err) throw new Error(err.message);
+    },
+    [demo, setDemoRoster],
+  );
+
+  const removePrayerGroup = useCallback(
+    async (groupNo: number) => {
+      if (demo) {
+        setDemoRoster(demoRosterRef.current.map((r) => (r.group_no === groupNo ? { ...r, group_no: null } : r)));
+        return;
+      }
+      const sb = getSupabase()!;
+      const { error: err } = await sb.from('prayer_partners').delete().eq('event_id', EVENT_ID).eq('group_no', groupNo);
+      if (err) throw new Error(err.message);
+    },
+    [demo, setDemoRoster],
+  );
 
   const value: StoreValue = {
     mode: demo ? 'demo' : 'supabase',
@@ -420,16 +737,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     profiles,
     user,
     myProfile,
+    myCard,
+    partners,
     isAdmin,
     updateEventState,
     saveProfile,
+    savePrayerCard,
     uploadAvatar,
-    sendSignInEmail,
-    verifyCode,
-    demoSignIn,
+    signInWithCode,
     signOut,
     setDemoAdmin,
     refresh,
+    loadRoster,
+    importParticipants,
+    removeParticipant,
+    addPrayerGroups,
+    removePrayerGroup,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

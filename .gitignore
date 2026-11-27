@@ -11,5 +11,11 @@ build/
 npm-debug.log*
 supabase/.temp/
 
+# Local data with people's names / personal info (repo is public)
+supabase/*.local.sql
+*.xlsx
+*.xls
+*.csv
+
 # Copied from pdfjs-dist by the copy-pdf-worker script
 public/pdf.worker.min.mjs

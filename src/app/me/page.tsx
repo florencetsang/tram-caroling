@@ -2,139 +2,93 @@
 
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Avatar } from '@/components/ProfileBits';
+import { Avatar, MyPrayerPartners } from '@/components/ProfileBits';
+import { DEMO_ROSTER } from '@/data/demo';
+import { formatCode } from '@/lib/formImport';
 import { cleanSocials, SOCIAL_LABELS } from '@/lib/socials';
-import { useStore, type ProfileInput } from '@/lib/store';
+import { useStore, type PrayerCardInput, type ProfileInput } from '@/lib/store';
 import { SOCIAL_KEYS } from '@/lib/types';
 
 function SignIn() {
-  const { mode, sendSignInEmail, verifyCode, demoSignIn } = useStore();
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const { mode, signInWithCode } = useStore();
   const [code, setCode] = useState('');
-  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  if (mode === 'demo') {
-    return (
-      <form
-        className="card space-y-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          demoSignIn(name);
-        }}
-      >
-        <h2 className="text-3xl">Join the ride</h2>
-        <p className="text-sm text-ink-500">Demo mode: no email needed. Your profile is saved on this device only.</p>
-        <label className="block">
-          <span className="label">Your name</span>
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Grace Lam" required />
-        </label>
-        <button className="btn-primary w-full">Continue</button>
-      </form>
-    );
-  }
-
-  const send = async (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setMessage(null);
     try {
-      await sendSignInEmail(email.trim());
-      setSent(true);
+      await signInWithCode(code);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Could not send email.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const verify = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setMessage(null);
-    try {
-      await verifyCode(email.trim(), code);
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Invalid code.');
+      setMessage(err instanceof Error ? err.message : 'Could not sign in.');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="card space-y-3">
+    <form className="card space-y-3" onSubmit={submit}>
       <h2 className="text-3xl">Sign in</h2>
-      {!sent ? (
-        <form className="space-y-3" onSubmit={send}>
-          <p className="text-sm text-ink-500">We’ll email you a sign-in link and a one-time code. No password needed.</p>
-          <label className="block">
-            <span className="label">Email</span>
-            <input
-              className="input"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          <button className="btn-primary w-full" disabled={busy}>
-            {busy ? 'Sending…' : 'Email me a link'}
-          </button>
-        </form>
-      ) : (
-        <form className="space-y-3" onSubmit={verify}>
-          <p className="text-sm text-ink-600 dark:text-ink-400">
-            Check <strong>{email}</strong>. Tap the link in the email, or enter the code here.
-          </p>
-          <label className="block">
-            <span className="label">One-time code</span>
-            <input
-              className="input text-center text-2xl tracking-[0.4em]"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-            />
-          </label>
-          <button className="btn-primary w-full" disabled={busy}>
-            {busy ? 'Checking…' : 'Sign in'}
-          </button>
-          <button type="button" className="btn-secondary w-full" onClick={() => setSent(false)}>
-            Use a different email
-          </button>
-        </form>
-      )}
+      <p className="text-sm text-ink-500">Enter the personal sign-in ID the organisers sent you.</p>
+      <label className="block">
+        <span className="label">Sign-in ID</span>
+        <input
+          className="input text-center font-mono text-2xl uppercase tracking-[0.2em]"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="XXXX-XXXX"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          required
+        />
+      </label>
+      <button className="btn-primary w-full" disabled={busy}>
+        {busy ? 'Checking…' : 'Sign in'}
+      </button>
       {message && <p className="text-sm text-[#8e3b2f] dark:text-[#e3a397]">{message}</p>}
-    </div>
+      {mode === 'demo' && (
+        <p className="text-xs text-ink-500">
+          Demo mode — try {DEMO_ROSTER.map((p) => formatCode(p.code!)).join(', ')}.
+        </p>
+      )}
+    </form>
   );
 }
 
+const EMPTY_PROFILE: ProfileInput = {
+  display_name: '',
+  avatar_url: null,
+  bio: '',
+  church: '',
+  gender: '',
+  day_off: '',
+  mbti: '',
+  socials: {},
+  visible: true,
+};
+
 function ProfileEditor() {
   const { user, myProfile, saveProfile, uploadAvatar, signOut, mode } = useStore();
-  const [form, setForm] = useState<ProfileInput>({
-    display_name: '',
-    avatar_url: null,
-    bio: '',
-    church: '',
-    socials: {},
-    visible: true,
-  });
+  const [form, setForm] = useState<ProfileInput>(EMPTY_PROFILE);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (myProfile) {
       const { id: _id, ...rest } = myProfile;
-      setForm({ ...rest, bio: rest.bio ?? '', church: rest.church ?? '' });
-    } else if (user?.email) {
-      setForm((f) => ({ ...f, display_name: f.display_name || user.email!.split('@')[0] }));
+      setForm({
+        ...rest,
+        bio: rest.bio ?? '',
+        church: rest.church ?? '',
+        gender: rest.gender ?? '',
+        day_off: rest.day_off ?? '',
+        mbti: rest.mbti ?? '',
+      });
     }
-  }, [myProfile, user]);
+  }, [myProfile]);
 
   const set = <K extends keyof ProfileInput>(key: K, value: ProfileInput[K]) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -162,6 +116,9 @@ function ProfileEditor() {
         display_name: form.display_name.trim() || 'Participant',
         bio: form.bio?.trim() || null,
         church: form.church?.trim() || null,
+        gender: form.gender?.trim() || null,
+        day_off: form.day_off?.trim() || null,
+        mbti: form.mbti?.trim() || null,
         socials: cleanSocials(form.socials),
       });
       setStatus('Saved ✓');
@@ -186,7 +143,6 @@ function ProfileEditor() {
               Remove
             </button>
           )}
-          {user?.email && <p className="truncate text-sm text-ink-500">{user.email}</p>}
         </div>
       </div>
 
@@ -194,6 +150,22 @@ function ProfileEditor() {
         <label className="block">
           <span className="label">Display name</span>
           <input className="input" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} required maxLength={60} />
+        </label>
+        <label className="block">
+          <span className="label">Gender</span>
+          <input className="input" list="gender-options" value={form.gender ?? ''} onChange={(e) => set('gender', e.target.value)} maxLength={40} />
+          <datalist id="gender-options">
+            <option value="Female" />
+            <option value="Male" />
+          </datalist>
+        </label>
+        <label className="block">
+          <span className="label">Your ideal day off usually involves…</span>
+          <textarea className="input min-h-20" value={form.day_off ?? ''} onChange={(e) => set('day_off', e.target.value)} maxLength={500} />
+        </label>
+        <label className="block">
+          <span className="label">MBTI (if you know it)</span>
+          <input className="input uppercase" value={form.mbti ?? ''} onChange={(e) => set('mbti', e.target.value)} maxLength={20} placeholder="e.g. ENFJ" />
         </label>
         <label className="block">
           <span className="label">Church / group (optional)</span>
@@ -233,7 +205,7 @@ function ProfileEditor() {
           Save profile
         </button>
         {user && (
-          <Link href={`/people/${user.id}`} className="btn-secondary">
+          <Link href={`/people/${user.profile_id}`} className="btn-secondary">
             Preview
           </Link>
         )}
@@ -247,12 +219,82 @@ function ProfileEditor() {
   );
 }
 
+function PrayerCardEditor() {
+  const { myCard, savePrayerCard } = useStore();
+  const [form, setForm] = useState<PrayerCardInput>({ conversation_starter: '', prayer_request: '' });
+  const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setForm({
+      conversation_starter: myCard?.conversation_starter ?? '',
+      prayer_request: myCard?.prayer_request ?? '',
+    });
+  }, [myCard]);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    try {
+      await savePrayerCard({
+        conversation_starter: form.conversation_starter?.trim() || null,
+        prayer_request: form.prayer_request?.trim() || null,
+      });
+      setStatus('Saved ✓');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not save.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="card space-y-3" onSubmit={onSubmit}>
+      <div>
+        <h3 className="text-xl">🙏 For your prayer partner</h3>
+        <p className="text-sm text-ink-500">Only your prayer partner (and the organisers) can see this.</p>
+      </div>
+      <label className="block">
+        <span className="label">Give your prayer partner a conversation starter</span>
+        <textarea
+          className="input min-h-20"
+          value={form.conversation_starter ?? ''}
+          onChange={(e) => setForm((f) => ({ ...f, conversation_starter: e.target.value }))}
+          maxLength={1000}
+        />
+      </label>
+      <label className="block">
+        <span className="label">How can your prayer partner pray for you this December?</span>
+        <textarea
+          className="input min-h-24"
+          value={form.prayer_request ?? ''}
+          onChange={(e) => setForm((f) => ({ ...f, prayer_request: e.target.value }))}
+          maxLength={2000}
+        />
+      </label>
+      <button className="btn-primary w-full" disabled={busy}>
+        Save
+      </button>
+      {status && <p className="text-center text-sm text-ink-600 dark:text-ink-400">{status}</p>}
+    </form>
+  );
+}
+
 export default function MePage() {
   const { user, isAdmin } = useStore();
   return (
     <div className="space-y-4">
       <h2 className="text-3xl">Me</h2>
-      {user ? <ProfileEditor /> : <SignIn />}
+      {user ? (
+        <>
+          <MyPrayerPartners />
+          <ProfileEditor />
+          <PrayerCardEditor />
+        </>
+      ) : (
+        <SignIn />
+      )}
       {!isAdmin && (
         <p className="text-center text-sm">
           <Link href="/admin" className="text-ink-500 underline">
