@@ -41,6 +41,8 @@ export interface Song {
   /** Optional PDF or image of the score. */
   score_url: string | null;
   sort_order: number;
+  /** Optional set-list section heading, e.g. "Session One — Christmas Joy". */
+  session: string | null;
 }
 
 export interface EventState {

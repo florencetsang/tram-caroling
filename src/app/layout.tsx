@@ -5,9 +5,9 @@ import { AppShell } from '@/components/AppShell';
 import { StoreProvider } from '@/lib/store';
 
 export const metadata: Metadata = {
-  title: 'Tram Caroling',
+  title: 'HOLY NIGHT, CITY LIGHTS • DEC 13',
   description: 'Route, prayer items and carols for the Hong Kong Island tram caroling event.',
-  appleWebApp: { capable: true, title: 'Tram Carols', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Holy Night', statusBarStyle: 'black-translucent' },
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
 };
 
