@@ -311,7 +311,5 @@ on conflict (id) do update set
 insert into public.event_state (event_id) values ('00000000-0000-0000-0000-000000000001')
 on conflict (event_id) do nothing;
 
--- After signing in once, make yourself an admin (replace the email):
--- insert into public.event_roles (event_id, user_id, role)
--- select '00000000-0000-0000-0000-000000000001', id, 'admin' from auth.users where email = 'you@example.com'
--- on conflict (event_id, user_id) do update set role = 'admin';
+-- Hosts are not seeded here (this repository is public). Copy supabase/hosts.example.sql to
+-- supabase/hosts.local.sql (git-ignored), fill in the names and run it in the SQL editor.

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Avatar } from '@/components/ProfileBits';
+import { Avatar, MyPrayerPartners } from '@/components/ProfileBits';
 import { useStore } from '@/lib/store';
 
 export default function PeoplePage() {
@@ -24,7 +24,7 @@ export default function PeoplePage() {
 
   const q = query.trim().toLowerCase();
   const list = q
-    ? profiles.filter((p) => [p.display_name, p.church, p.bio].some((v) => v?.toLowerCase().includes(q)))
+    ? profiles.filter((p) => [p.display_name, p.church, p.bio, p.mbti].some((v) => v?.toLowerCase().includes(q)))
     : profiles;
 
   return (
@@ -33,6 +33,7 @@ export default function PeoplePage() {
         <h2 className="text-3xl">Participants</h2>
         <span className="text-sm text-ink-500">{profiles.length} people</span>
       </div>
+      <MyPrayerPartners />
       <input
         className="input"
         type="search"
@@ -48,7 +49,7 @@ export default function PeoplePage() {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-lg font-semibold">
                   {p.display_name}
-                  {p.id === user?.id && <span className="ml-2 text-sm font-normal text-ink-500">(you)</span>}
+                  {p.id === user?.profile_id && <span className="ml-2 text-sm font-normal text-ink-500">(you)</span>}
                 </span>
                 {(p.church || p.bio) && (
                   <span className="block truncate text-sm text-ink-500">{p.church || p.bio}</span>

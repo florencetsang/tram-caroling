@@ -10,9 +10,9 @@ carols and praying for each district they pass.
 | --- | --- |
 | **Route** (`/ride`) | Leaflet + OpenStreetMap map of the tram line, split into districts. Each phone uses its own GPS, snaps to the tram line and shows the **current district and its prayer items**, plus a preview of the next one. A host "district override" wins over GPS. A **Simulate** mode lets you scrub/play along the route for testing. |
 | **Songs** | Song list and song pages with lyrics + chords (ChordPro), show/hide chords, transpose, adjustable text size and optional score (PDF/image). The **current song and section** chosen by the host is pinned in a live banner on every screen and highlighted in the lyrics. |
-| **People** | Participant list (signed-in users only) and profile pages with opt-in social links. |
-| **Me** | Passwordless sign-in (email link or one-time code) and profile editing: name, photo, church/group, bio, social accounts, visibility. |
-| **Admin** | Host controls (visible to admins): set current song + section, override the district for everyone, broadcast an announcement. |
+| **People** | Participant list (signed-in users only) and profile pages (gender, ideal day off, MBTI, opt-in social links). Shows your prayer partner once the session has started. |
+| **Me** | Sign in with a personal **sign-in ID** (e.g. `ABCD-EFGH`, sent to each participant before the event) and profile editing: name, photo, church/group, gender, ideal day off, MBTI, bio, social accounts, visibility, plus your private prayer-partner card (conversation starter + prayer request). |
+| **Admin** | Host controls (visible to admins): set current song + section, override the district for everyone, broadcast an announcement; import form responses (.xlsx/.csv) or add participants manually, copy/download sign-in IDs; pair prayer partners and **start the prayer partner session**. |
 
 Also: dark mode, large readable text, "Keep screen on" (Screen Wake Lock), installable PWA with a
 service worker for the app shell, and last-loaded songs/prayer items cached on the device for
@@ -32,38 +32,47 @@ npm run dev
 ```
 
 Open http://localhost:3000. Without Supabase environment variables the app runs in **demo mode**:
-sample districts, carols and participants are bundled, your profile is stored in `localStorage`,
+sample districts, carols and participants are bundled, the roster and your profile are stored in `localStorage`,
 and host changes sync live between tabs of the same browser (open `/admin` in one tab and
-`/songs` in another). Use **Me → Host controls → Enable host mode (demo)** to try admin features.
+`/songs` in another). Sign in on **Me** with one of the demo sign-in IDs shown there, and use
+**Admin → Enable host mode (demo)** to try admin features.
 
 ## Supabase setup
 
 1. Create a project at https://supabase.com (free tier is fine).
 2. Apply the schema and seed data — either:
-   - **Dashboard:** open *SQL Editor*, paste and run
-     [`supabase/migrations/20261114000000_init.sql`](supabase/migrations/20261114000000_init.sql),
+   - **Dashboard:** open *SQL Editor*, paste and run each file in
+     [`supabase/migrations/`](supabase/migrations) in filename order,
      then [`supabase/seed.sql`](supabase/seed.sql); or
    - **CLI:** `npx supabase link --project-ref <ref>` then `npx supabase db push` and run
      `seed.sql` in the SQL editor (or `npx supabase db reset` against a local stack, which applies both).
-3. **Auth → Providers → Email:** keep Email enabled (magic link / OTP).
-   To let people type the 6-digit code as well as tap the link, edit **Auth → Email Templates →
-   Magic Link** to include `{{ .Token }}`.
-4. **Auth → URL Configuration:** set *Site URL* to your deployed URL and add
-   `http://localhost:3000/**` and `https://<your-app>.vercel.app/**` to *Redirect URLs*.
-5. Copy `.env.example` to `.env.local` and fill in *Project Settings → API*:
+
+   > The `…_participants.sql` migration replaces email sign-in with sign-in IDs and **resets all
+   > existing profiles and host roles**.
+3. **Auth → Providers → Anonymous sign-ins:** enable it. Each device signs in anonymously and is then
+   linked to a participant by their sign-in ID (email sign-in is not used).
+4. Copy `.env.example` to `.env.local` and fill in *Project Settings → API*:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
    NEXT_PUBLIC_EVENT_ID=00000000-0000-0000-0000-000000000001
    ```
-6. Sign in once through the app, then make yourself a host in the SQL editor:
+5. Hosts: copy [`supabase/hosts.example.sql`](supabase/hosts.example.sql) to `supabase/hosts.local.sql`
+   (git-ignored, so names stay out of this public repo), fill in the hosts' names and run it in the SQL
+   editor; it returns each host's sign-in ID. Look them up again later with
    ```sql
-   insert into public.event_roles (event_id, user_id, role)
-   select '00000000-0000-0000-0000-000000000001', id, 'admin'
-   from auth.users where email = 'you@example.com'
-   on conflict (event_id, user_id) do update set role = 'admin';
+   select p.display_name, c.code from public.event_roles r
+   join public.profiles p on p.id = r.profile_id
+   join public.sign_in_codes c on c.profile_id = p.id
+   where r.role = 'admin';
    ```
-   Reload the app — the **Admin** tab appears.
+   To add another host: `select public.create_host('00000000-0000-0000-0000-000000000001', 'Their Name');`
+   (promotes an existing participant with that name, or creates one; returns their sign-in ID).
+6. Sign in on **Me** with a host's ID, open **Admin**, and upload the Google Form responses (.xlsx or .csv
+   export). Each participant gets a profile pre-filled from *Your name*, *Gender*, *ideal day off*, *MBTI* and
+   their prayer-partner answers, plus a unique sign-in ID to send them. Re-upload the latest file any time:
+   responses already imported are skipped, and a response whose name matches a participant without form
+   data (e.g. a host) fills in that profile.
 
 ### Data model
 
@@ -73,11 +82,15 @@ and host changes sync live between tabs of the same browser (open `/admin` in on
 | `districts` | Name, Chinese name, order, start point on the tram line | read: everyone · write: admins |
 | `prayer_items` | Prayer items per district | read: everyone · write: admins |
 | `songs` | Title, author, key, ChordPro text, score URL | read: everyone · write: admins |
-| `event_state` | Live state: current song/section, district override, announcement (Realtime) | read: everyone · write: admins |
-| `profiles` | Display name, avatar, bio, church, `socials` JSON, `visible` | read: signed-in users (visible profiles + own) · write: own row |
-| `event_roles` | `admin` / `participant` per user per event | read: self/admins · write: admins |
+| `event_state` | Live state: current song/section, district override, announcement, `prayer_partners_on` (Realtime) | read: everyone · write: admins |
+| `profiles` | Participant: display name, avatar, bio, church, gender, day off, MBTI, `socials` JSON, `visible`, `form_key` (import dedupe) | read: signed-in participants (visible + own + partners) · write: own row (hosts add/remove via RPC) |
+| `sign_in_codes` | One sign-in ID per participant | read: admins only |
+| `profile_logins` | Which auth user (device) is signed in as which participant | read: self · write: `claim_sign_in` RPC |
+| `event_roles` | `admin` / `participant` per participant per event | read: self/admins · write: admins |
+| `prayer_cards` | Conversation starter + prayer request | read: owner, admins, and prayer partners while the session is on · write: owner |
+| `prayer_partners` | Group number per participant (same number = partners; pairs or a trio) | read: admins; own group while the session is on · write: admins |
 
-Storage buckets: `avatars` (users write to `<their-user-id>/…`) and `scores` (admins only); both are public-read.
+Storage buckets: `avatars` (users write to `<their-auth-user-id>/…`) and `scores` (admins only); both are public-read.
 
 ### Editing content
 
