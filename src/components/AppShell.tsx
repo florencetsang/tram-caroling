@@ -12,6 +12,7 @@ const TABS = [
   { href: '/ride', label: 'Route', icon: '🚋' },
   { href: '/songs', label: 'Songs', icon: '🎵' },
   { href: '/people', label: 'People', icon: '👥' },
+  { href: '/leaflet', label: 'Leaflet', icon: '✦' },
   { href: '/me', label: 'Me', icon: '🙂' },
 ];
 
@@ -25,7 +26,7 @@ function ThemeToggle() {
     setDark(next);
   };
   return (
-    <button onClick={toggle} className="rounded-lg p-2 text-lg hover:bg-white/10" aria-label="Toggle dark mode">
+    <button onClick={toggle} className="rounded-lg p-2 text-lg hover:bg-ink-100/10" aria-label="Toggle dark mode">
       {dark ? '☀️' : '🌙'}
     </button>
   );
@@ -37,7 +38,7 @@ function WakeLockToggle() {
   return (
     <button
       onClick={toggle}
-      className={`rounded-lg px-2 py-1 text-xs font-semibold ${active ? 'bg-white text-tram-700' : 'bg-white/10 text-white'}`}
+      className={`rounded-lg px-2 py-1 text-xs font-semibold ${active ? 'bg-gold-500 text-ink-950' : 'border border-gold-500/40 text-gold-300'}`}
       aria-pressed={active}
       title="Keep the screen on during the ride"
     >
@@ -60,27 +61,27 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col">
-      <header className="sticky top-0 z-20 bg-tram-700 text-white shadow dark:bg-slate-900">
+      <header className="sticky top-0 z-20 border-b border-gold-500/40 bg-ink-950 text-ink-100">
         <div className="flex items-center gap-2 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <span className="text-xl" aria-hidden>
-            🚋
+          <span className="text-lg text-gold-400" aria-hidden>
+            ✦
           </span>
-          <h1 className="flex-1 truncate text-lg font-bold">{eventName}</h1>
+          <h1 className="flex-1 truncate font-serif text-xl font-medium tracking-tight">{eventName}</h1>
           <WakeLockToggle />
           <ThemeToggle />
         </div>
         {mode === 'demo' && (
-          <div className="bg-amber-400 px-4 py-0.5 text-center text-xs font-semibold text-amber-950">
+          <div className="bg-gold-500 px-4 py-0.5 text-center text-xs font-semibold text-ink-950">
             Demo mode — sample data, live updates sync between tabs on this device
           </div>
         )}
-        {error && <div className="bg-slate-700 px-4 py-0.5 text-center text-xs">{error}</div>}
+        {error && <div className="bg-ink-800 px-4 py-0.5 text-center text-xs">{error}</div>}
         <NowSinging />
       </header>
 
       <main className="flex-1 px-4 pb-28 pt-4">{children}</main>
 
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-ink-200 bg-ink-50/95 backdrop-blur dark:border-gold-500/30 dark:bg-ink-950/95">
         <ul className="mx-auto flex max-w-2xl">
           {tabs.map((t) => {
             const active = pathname === t.href || pathname.startsWith(t.href + '/');
@@ -88,8 +89,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <li key={t.href} className="flex-1">
                 <Link
                   href={t.href}
-                  className={`flex flex-col items-center py-2 text-xs font-semibold ${
-                    active ? 'text-tram-700 dark:text-tram-500' : 'text-slate-500 dark:text-slate-400'
+                  className={`flex flex-col items-center gap-0.5 border-t-2 py-2 text-[0.65rem] font-semibold uppercase tracking-wider ${
+                    active
+                      ? 'border-gold-500 text-tram-700 dark:text-gold-400'
+                      : 'border-transparent text-ink-500 dark:text-ink-400'
                   }`}
                   aria-current={active ? 'page' : undefined}
                 >

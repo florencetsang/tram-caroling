@@ -25,7 +25,7 @@ export function Avatar({ profile, size = 48 }: { profile: Pick<Profile, 'display
   }
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-full bg-tram-100 font-bold text-tram-700 dark:bg-tram-900 dark:text-tram-100"
+      className="flex shrink-0 items-center justify-center rounded-full bg-tram-700 font-serif text-gold-300 dark:bg-ink-800"
       style={{ width: size, height: size, fontSize: size * 0.38 }}
       aria-hidden
     >

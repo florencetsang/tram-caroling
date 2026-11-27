@@ -13,8 +13,8 @@ export default function PeoplePage() {
     return (
       <div className="card space-y-3 text-center">
         <p className="text-4xl">👥</p>
-        <h2 className="text-xl font-bold">Participants</h2>
-        <p className="text-slate-600 dark:text-slate-400">Sign in to see who else is on the tram and connect with them.</p>
+        <h2 className="text-3xl">Participants</h2>
+        <p className="text-ink-600 dark:text-ink-400">Sign in to see who else is on the tram and connect with them.</p>
         <Link href="/me" className="btn-primary">
           Sign in
         </Link>
@@ -30,8 +30,8 @@ export default function PeoplePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Participants</h2>
-        <span className="text-sm text-slate-500">{profiles.length} people</span>
+        <h2 className="text-3xl">Participants</h2>
+        <span className="text-sm text-ink-500">{profiles.length} people</span>
       </div>
       <input
         className="input"
@@ -48,20 +48,20 @@ export default function PeoplePage() {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-lg font-semibold">
                   {p.display_name}
-                  {p.id === user?.id && <span className="ml-2 text-sm font-normal text-slate-500">(you)</span>}
+                  {p.id === user?.id && <span className="ml-2 text-sm font-normal text-ink-500">(you)</span>}
                 </span>
                 {(p.church || p.bio) && (
-                  <span className="block truncate text-sm text-slate-500">{p.church || p.bio}</span>
+                  <span className="block truncate text-sm text-ink-500">{p.church || p.bio}</span>
                 )}
               </span>
-              <span aria-hidden className="text-slate-400">
+              <span aria-hidden className="text-ink-400">
                 ›
               </span>
             </Link>
           </li>
         ))}
       </ul>
-      {!list.length && <p className="text-slate-500">No one found.</p>}
+      {!list.length && <p className="text-ink-500">No one found.</p>}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /* Tram Caroling service worker: offline app shell + cached static assets. */
-const VERSION = 'tc-v1';
-const SHELL = ['/ride', '/songs', '/people', '/me', '/icon.svg'];
+const VERSION = 'tc-v3';
+const SHELL = ['/ride', '/songs', '/people', '/leaflet', '/me', '/icon.svg', '/leaflet.pdf', '/pdf.worker.min.mjs'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, '/ride'));
-  } else if (url.pathname.startsWith('/_next/static/') || url.pathname === '/icon.svg') {
+  } else if (url.pathname.startsWith('/_next/static/') || url.pathname === '/icon.svg' || url.pathname === '/leaflet.pdf' || url.pathname === '/pdf.worker.min.mjs') {
     event.respondWith(cacheFirst(request));
   } else {
     event.respondWith(staleWhileRevalidate(request));

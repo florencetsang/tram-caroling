@@ -10,3 +10,6 @@ build/
 .DS_Store
 npm-debug.log*
 supabase/.temp/
+
+# Copied from pdfjs-dist by the copy-pdf-worker script
+public/pdf.worker.min.mjs

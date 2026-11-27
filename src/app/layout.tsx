@@ -1,8 +1,17 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, Newsreader } from 'next/font/google';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import { AppShell } from '@/components/AppShell';
 import { StoreProvider } from '@/lib/store';
+
+const serif = Newsreader({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
+  display: 'swap',
+});
+const sans = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'HOLY NIGHT, CITY LIGHTS • DEC 13',
@@ -15,10 +24,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#166534' },
-    { media: '(prefers-color-scheme: dark)', color: '#020617' },
-  ],
+  themeColor: '#0b2e28',
 };
 
 // Apply the saved/system theme before first paint to avoid a flash.
@@ -26,7 +32,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem('tc.theme');var 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

@@ -14,10 +14,10 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="card space-y-3">
-        <h2 className="text-xl font-bold">Host controls</h2>
+        <h2 className="text-3xl">Host controls</h2>
         {mode === 'demo' ? (
           <>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-ink-600 dark:text-ink-400">
               In demo mode anyone can try the host controls. Open the app in a second tab to see updates arrive live.
             </p>
             <button className="btn-primary w-full" onClick={() => setDemoAdmin(true)}>
@@ -25,7 +25,7 @@ export default function AdminPage() {
             </button>
           </>
         ) : (
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-ink-600 dark:text-ink-400">
             {user
               ? 'Your account is not a host for this event. Ask an organiser to add you to event_roles as admin.'
               : 'Sign in on the Me tab first.'}
@@ -48,23 +48,23 @@ export default function AdminPage() {
   const sections = currentSong ? sectionLabels(currentSong.chordpro) : [];
   const pill = (active: boolean) =>
     `rounded-xl px-3 py-2 text-left font-semibold transition ${
-      active ? 'bg-berry-600 text-white' : 'border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'
+      active ? 'bg-gold-500 text-ink-950' : 'border border-ink-300 bg-ink-50 dark:border-ink-700 dark:bg-ink-900'
     }`;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Host controls</h2>
+        <h2 className="text-3xl">Host controls</h2>
         {mode === 'demo' && (
-          <button className="text-sm text-slate-500 underline" onClick={() => setDemoAdmin(false)}>
+          <button className="text-sm text-ink-500 underline" onClick={() => setDemoAdmin(false)}>
             Exit host mode
           </button>
         )}
       </div>
-      {error && <p className="rounded-xl bg-berry-600 p-3 text-sm text-white">{error}</p>}
+      {error && <p className="rounded-lg bg-[#8e3b2f] p-3 text-sm text-ink-50">{error}</p>}
 
       <section className="card space-y-3">
-        <h3 className="text-lg font-bold">🎵 Current song</h3>
+        <h3 className="text-xl">🎵 Current song</h3>
         <div className="grid gap-2">
           {songs.map((s) => (
             <button
@@ -103,8 +103,8 @@ export default function AdminPage() {
 
       <section className="card space-y-3">
         <div>
-          <h3 className="text-lg font-bold">📍 District</h3>
-          <p className="text-sm text-slate-500">
+          <h3 className="text-xl">📍 District</h3>
+          <p className="text-sm text-ink-500">
             “Automatic” lets each phone use its own location. Pick a district to show it on everyone’s screen.
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function AdminPage() {
       </section>
 
       <section className="card space-y-3">
-        <h3 className="text-lg font-bold">📣 Announcement</h3>
+        <h3 className="text-xl">📣 Announcement</h3>
         <textarea
           className="input min-h-20"
           value={announcement}
@@ -149,7 +149,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-ink-500">
         Last update {new Date(eventState.updated_at).getTime() > 0 ? new Date(eventState.updated_at).toLocaleTimeString() : '—'}
       </p>
     </div>
