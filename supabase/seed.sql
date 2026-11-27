@@ -45,6 +45,11 @@ insert into public.prayer_items (id, district_id, title, body, sort_order) value
   ('00000000-0000-0000-0002-000000000103', '00000000-0000-0000-0001-000000000010', 'The year ahead', 'Thanksgiving for this evening and blessing on Hong Kong in the year ahead.', 3)
 on conflict (id) do update set title = excluded.title, body = excluded.body, sort_order = excluded.sort_order;
 
+-- Remove songs dropped from the set list.
+delete from public.songs where event_id = '00000000-0000-0000-0000-000000000001' and id not in (
+  select ('00000000-0000-0000-0003-' || lpad(n::text, 12, '0'))::uuid from generate_series(1, 11) n
+);
+
 insert into public.songs (id, event_id, title, author, song_key, sort_order, session, chordpro) values
 (
   '00000000-0000-0000-0003-000000000001', '00000000-0000-0000-0000-000000000001',
@@ -118,8 +123,8 @@ $cp$
 ),
 (
   '00000000-0000-0000-0003-000000000004', '00000000-0000-0000-0000-000000000001',
-  '我向祢禱告', null, null, 4, '🎄 01 · Christmas Joy',
-$cp${title: 我向祢禱告}
+  '愛是不保留', null, null, 4, '🎄 01 · Christmas Joy',
+$cp${title: 愛是不保留}
 
 {comment: Lyrics and chords to be added by an admin (licensed song).}
 $cp$
@@ -213,8 +218,8 @@ $cp$
 ),
 (
   '00000000-0000-0000-0003-000000000009', '00000000-0000-0000-0000-000000000001',
-  '上帝早已預備', null, null, 9, '💛 03 · Hope to Carry Home',
-$cp${title: 上帝早已預備}
+  '我向祢禱告', null, null, 9, '💛 03 · Hope to Carry Home',
+$cp${title: 我向祢禱告}
 
 {comment: Lyrics and chords to be added by an admin (licensed song).}
 $cp$
@@ -229,15 +234,7 @@ $cp$
 ),
 (
   '00000000-0000-0000-0003-000000000011', '00000000-0000-0000-0000-000000000001',
-  'Build My Life', null, null, 11, '💛 03 · Hope to Carry Home',
-$cp${title: Build My Life}
-
-{comment: Lyrics and chords to be added by an admin (licensed song).}
-$cp$
-),
-(
-  '00000000-0000-0000-0003-000000000012', '00000000-0000-0000-0000-000000000001',
-  'Joy to the World', 'Isaac Watts / arr. Lowell Mason', 'D', 12, '💛 03 · Hope to Carry Home',
+  'Joy to the World', 'Isaac Watts / arr. Lowell Mason', 'D', 11, '💛 03 · Hope to Carry Home',
 $cp${title: Joy to the World}
 {subtitle: Isaac Watts / arr. Lowell Mason}
 {key: D}
