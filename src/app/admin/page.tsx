@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AdminParticipants } from '@/components/AdminParticipants';
 import { sectionLabels } from '@/lib/chordpro';
 import { useStore, type EventStatePatch } from '@/lib/store';
 
@@ -27,7 +28,7 @@ export default function AdminPage() {
         ) : (
           <p className="text-ink-600 dark:text-ink-400">
             {user
-              ? 'Your account is not a host for this event. Ask an organiser to add you to event_roles as admin.'
+              ? 'You are not a host for this event. Ask an organiser to make you a host.'
               : 'Sign in on the Me tab first.'}
           </p>
         )}
@@ -148,6 +149,8 @@ export default function AdminPage() {
           </button>
         </div>
       </section>
+
+      <AdminParticipants />
 
       <p className="text-center text-xs text-ink-500">
         Last update {new Date(eventState.updated_at).getTime() > 0 ? new Date(eventState.updated_at).toLocaleTimeString() : '—'}

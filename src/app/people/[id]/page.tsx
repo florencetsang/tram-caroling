@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Avatar, SocialLinks } from '@/components/ProfileBits';
+import { Avatar, ProfileFacts, SocialLinks } from '@/components/ProfileBits';
 import { useStore } from '@/lib/store';
 
 export default function PersonPage() {
   const { id } = useParams<{ id: string }>();
-  const { profiles, myProfile, user } = useStore();
-  const profile = profiles.find((p) => p.id === id) ?? (myProfile?.id === id ? myProfile : undefined);
+  const { profiles, myProfile, user, partners } = useStore();
+  const partner = partners.find((p) => p.profile.id === id);
+  const profile =
+    profiles.find((p) => p.id === id) ?? (myProfile?.id === id ? myProfile : undefined) ?? partner?.profile;
+  const partnerCard = partner?.card;
 
   return (
     <div className="space-y-4">
@@ -30,7 +33,21 @@ export default function PersonPage() {
           <div className="flex justify-center">
             <SocialLinks profile={profile} />
           </div>
-          {profile.id === user?.id && (
+          <ProfileFacts profile={profile} />
+          {partnerCard && (
+            <div className="space-y-2 rounded-xl border-2 border-gold-500 p-3 text-left">
+              <p className="font-semibold">🙏 Your prayer partner</p>
+              <div>
+                <p className="label">Conversation starter</p>
+                <p className="whitespace-pre-line">{partnerCard.conversation_starter || '—'}</p>
+              </div>
+              <div>
+                <p className="label">Please pray for</p>
+                <p className="whitespace-pre-line">{partnerCard.prayer_request || '—'}</p>
+              </div>
+            </div>
+          )}
+          {profile.id === user?.profile_id && (
             <Link href="/me" className="btn-secondary">
               Edit my profile
             </Link>

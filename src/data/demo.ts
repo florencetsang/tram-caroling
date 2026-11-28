@@ -1,4 +1,4 @@
-import type { District, PrayerItem, Profile, Song } from '@/lib/types';
+import type { District, PrayerCard, PrayerItem, Profile, RosterEntry, Song } from '@/lib/types';
 
 /*
  * Demo content. Mirrors supabase/seed.sql (same IDs) so the app looks the same
@@ -422,41 +422,81 @@ And [A]wonders of His love,
   },
 ];
 
-export const DEMO_PROFILES: Profile[] = [
-  {
-    id: 'demo-ada',
-    display_name: 'Ada Chan',
-    avatar_url: null,
-    bio: 'Alto. Loves hot milk tea and singing harmonies on the upper deck.',
-    church: 'Island Community Church',
-    socials: { instagram: 'ada.sings', whatsapp: '85291234567' },
-    visible: true,
-  },
-  {
-    id: 'demo-ben',
-    display_name: 'Ben Wong',
-    avatar_url: null,
-    bio: 'Guitar and chords. Ask me for a capo!',
-    church: 'Wan Chai Fellowship',
-    socials: { telegram: 'benwong', website: 'https://example.com' },
-    visible: true,
-  },
-  {
-    id: 'demo-carmen',
-    display_name: 'Carmen Lee',
-    avatar_url: null,
-    bio: 'Prayer team lead for the eastern districts.',
-    church: null,
-    socials: { facebook: 'carmen.lee', linkedin: 'https://www.linkedin.com/in/example' },
-    visible: true,
-  },
-  {
-    id: 'demo-david',
-    display_name: 'David Ho',
-    avatar_url: null,
-    bio: 'First time tram caroling!',
-    church: 'North Point Alliance',
-    socials: {},
-    visible: true,
-  },
+type DemoPerson = Omit<RosterEntry, 'form_key'>;
+
+const person = (
+  id: string,
+  code: string,
+  group_no: number | null,
+  profile: Omit<Profile, 'id' | 'avatar_url' | 'visible'>,
+  card: Omit<PrayerCard, 'profile_id'>,
+): DemoPerson => ({
+  profile: { id, avatar_url: null, visible: true, ...profile },
+  code,
+  group_no,
+  card: { profile_id: id, ...card },
+});
+
+/** Demo participants; sign in with any of these codes in demo mode. */
+export const DEMO_ROSTER: DemoPerson[] = [
+  person(
+    'demo-ada',
+    'ADACHAN2',
+    1,
+    {
+      display_name: 'Ada Chan',
+      bio: 'Alto. Loves hot milk tea and singing harmonies on the upper deck.',
+      church: 'Island Community Church',
+      gender: 'Female',
+      day_off: 'A slow brunch, then a hike up Dragon’s Back.',
+      mbti: 'ENFJ',
+      socials: { instagram: 'ada.sings', whatsapp: '85291234567' },
+    },
+    { conversation_starter: 'What’s a carol that reminds you of childhood?', prayer_request: 'Peace and wisdom as I start a new job in January.' },
+  ),
+  person(
+    'demo-ben',
+    'BENWNG23',
+    1,
+    {
+      display_name: 'Ben Wong',
+      bio: 'Guitar and chords. Ask me for a capo!',
+      church: 'Wan Chai Fellowship',
+      gender: 'Male',
+      day_off: 'Jamming with friends and finding a new cha chaan teng.',
+      mbti: 'ISFP',
+      socials: { telegram: 'benwong', website: 'https://example.com' },
+    },
+    { conversation_starter: 'Ask me about my worst busking story.', prayer_request: 'Pray for my family to be reconciled this Christmas.' },
+  ),
+  person(
+    'demo-carmen',
+    'CARMEN23',
+    null,
+    {
+      display_name: 'Carmen Lee',
+      bio: 'Prayer team lead for the eastern districts.',
+      church: null,
+      gender: 'Female',
+      day_off: 'Reading by the harbour with a good coffee.',
+      mbti: 'INFJ',
+      socials: { facebook: 'carmen.lee', linkedin: 'https://www.linkedin.com/in/example' },
+    },
+    { conversation_starter: 'What book has shaped your faith the most?', prayer_request: 'Rest and renewed energy after a busy term.' },
+  ),
+  person(
+    'demo-david',
+    'DAVDH234',
+    null,
+    {
+      display_name: 'David Ho',
+      bio: 'First time tram caroling!',
+      church: 'North Point Alliance',
+      gender: 'Male',
+      day_off: 'Football in the morning, board games at night.',
+      mbti: null,
+      socials: {},
+    },
+    { conversation_starter: 'Which district would you most like to pray for?', prayer_request: null },
+  ),
 ];
